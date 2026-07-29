@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 reconfig() {
 	# Parse arguments
-	while getopts 'd:' arg; do
+	while getopts 'd:x:' arg; do
 		case "${arg}" in
 			d) local delimiter="${OPTARG}";;
+			x) local exception="${OPTARG}";;
+			p) local create_nonexistent=true
 			*)
 				log e "Invalid argument."
 				return 1
@@ -11,13 +13,35 @@ reconfig() {
 		esac
 	done
 	delimiter="${delimiter:-' '}"
+	exception="${exception:-'abort'}"
+	create_nonexistent="${create_nonexistent:-'false'}"
 	shift "$((OPTIND - 1))"
 	#
-	# The divider used to delimitate the key and value; and the target file.
-	# Defined via an environment variable to avoid extreme repetition.
-	# Remove any existing keys & then add the new entry
-	mkdir -p "$(dirname -- ${3})"; >>"${3}"
-	grep -qE "^[^#].*${1}${delimiter}.*$" <"${3}" &&
-		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
-	echo "${1}${delimiter}${2}" >>"${3}"
+	# Create non-existent path if specified.
+	if [[ -f "${3}" || "${create_nonexistent}" == true ]]; then
+		mkdir -p "$(dirname "${3}")" && >>"${3}"
+	else
+		log e "The provided path \"${3}\" doesn't exist!"
+		return 3
+	fi
+	#
+	# Detect duplicates
+	local duplicate=false
+	grep -qE "^[^#].*${1}${delimiter}.*$" <"${3}" && duplicate=true
+	#
+	# Handle duplicate entries accordingly
+	[[ "${duplicate}" == true ]] && case "${exception}" in
+		replace)
+			sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
+			echo "${1}${delimiter}${2}"[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && >>"${3}" >>"${3}"
+		;;append)
+			echo "${1}${delimiter}${2}" >>"${3}"
+		abort)
+			log e "The key \"${1}\" was already defined in \"${3}\". The operation was aborted and \"${1}\" was not set to \"${2}\"."
+			return 2
+		;;*)
+			log e "The value \"${exception}\" for the -x opt is invalid. The valid values are:"$'\n\t"replace", "append", or "abort".'
+			return 1
+		;;
+	esac
 }
