@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+checklist() {
+	local ui item selections selection x=0
+	#
+	# Open a fd for UI text if there isn't already one open.
+	{ [[ ! "${ui}" =~ ^[0-9]+$ ]] || true >&"${ui}"; } && exec {ui}>&2
+	#
+	# Grab args
+	local args="$(getopt --options mt: --longoptions multi,title: -- "$@")"
+	eval set -- "${args[*]}"
+	while true; do
+		case "${1}" in
+			-m|--multi)
+				local multi=true
+				shift
+			;;
+			-t|--title)
+				local title="${2}"
+				shift 2
+			;;
+			--)
+				shift
+				break
+			;;
+			*)
+				break
+			;;
+		esac
+	done
+	local entries=("$@")
+	#
+	# Display options
+	clear >&"${ui}"
+	[[ -n "${preprompt_msg}" ]] && echo "${preprompt_msg}" >&"${ui}"
+	echo "${title}" >&"${ui}"
+	for item in "${entries[@]}"; do
+		x="$((x + 1))"
+		item="${x}) ${item}"
+		echo "    ${item}" >&"${ui}"
+	done
+	#
+	# Determinte selection mode & grab selection(s)
+	if [[ -n "${multi}" ]]; then
+		printf '%s\n' 'Enter your selections—separated by spaces.' '(i.e. "1 4 6 9")' >&"${ui}"
+	else
+		printf '%s\n' 'Enter a single selection' '(i.e. "5")' >&"${ui}"
+	fi
+	read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections >&"${ui}"
+	#
+	# Do nothing with empty responses
+	# Validate user choices & return the choices
+	[[ -z "${selections[*]}" ]] && return 0
+	[[ -z "${multi}" && "${#selections[@]}" -gt 1 ]] && return 1
+	for selection in "${selections[@]}"; do
+		[[
+			"${selection}" =~ ^[0-9]+$ &&
+			"${selection}" -gt 0 &&
+			"${selection}" -le "${#entries[@]}"
+		]] && echo "${entries["$(("${selection}" - 1 ))"]}"
+	done
+}

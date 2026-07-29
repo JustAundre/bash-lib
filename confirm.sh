@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+confirm() {
+	while [[ ! "${answer}" =~ ^[YyNn]$ ]]; do
+		clear
+		[[ -n "${preprompt_msg}" ]] && printf -- '%s\n' "${preprompt_msg}"
+		printf "%s? [y/n]: \n" "${1}"
+		read -er answer
+		answer="${answer:0:1}"
+	done
+	[[ "${answer}" =~ ^[Yy]$ ]]
+}
