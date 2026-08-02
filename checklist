@@ -35,8 +35,7 @@ checklist() {
 	echo "${title}" >&"${ui}"
 	for item in "${entries[@]}"; do
 		x="$((x + 1))"
-		item="${x}) ${item}"
-		echo "    ${item}" >&"${ui}"
+		[[ -n "${item}" ]] && echo "    ${x}) ${item}" >&"${ui}"
 	done
 	#
 	# Determinte selection mode & grab selection(s)
