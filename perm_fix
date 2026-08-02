@@ -8,6 +8,7 @@ perm_fix() {
 			m) local mode="${OPTARG}";;
 			o) local owner="${OPTARG}";;
 			g) local group="${OPTARG}";;
+			f) local force=true
 			*)
 				log e "Invalid opt."
 				return 1
@@ -31,7 +32,7 @@ perm_fix() {
 	fi
 	if [[ -n "${errors[*]}" ]]; then
 		log e "${errors[@]}"
-		return 2
+		return 1
 	fi
 	#
 	# Shift by the amount of getopts to get our paths
@@ -39,6 +40,10 @@ perm_fix() {
 	#
 	# Iterate over every path
 	for path in "$@"; do
+		# Validate path
+		[[ -L "${path}" ]] && log w "\"${path}\" is a symlink to \"$(realpath "${path}")\"."
+		[[ -L "${path}" && "${force}" == true ]] && { log e 'Refused to process symlinks without the "-f" opt...'; return 2 }
+		#
 		# Create non-existent files
 		if [[ ! -e "${path}" ]]; then
 			mkdir -p "$(dirname -- "${path}")"
@@ -47,10 +52,10 @@ perm_fix() {
 		#
 		# Save stats for file pre-change
 		before="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
-		#
+		#h
 		# Attempt the change
-		chown -hP -- "${owner}:${group}" "${path}" || return 3
-		[[ -n "${mode}" ]] && chmod -P -- "${mode}" "${path}" || exit 4
+		chown -h -- "${owner}:${group}" "${path}" || return 3
+		[[ -n "${mode}" ]] && chmod -- "${mode}" "${path}" || return 4
 		#
 		# Check stats for file post-change
 		after="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
