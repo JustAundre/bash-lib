@@ -40,20 +40,23 @@ perm_fix() {
 	# Iterate over every path
 	for path in "$@"; do
 		# Create non-existent files
-		mkdir -p "$(dirname -- "${path}")" >>"${path}"
+		if [[ ! -e "${path}" ]]; then
+			mkdir -p "$(dirname -- "${path}")"
+			: >>"${path}"
+		fi
 		#
 		# Save stats for file pre-change
 		before="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
 		#
 		# Attempt the change
 		chown -hP -- "${owner}:${group}" "${path}" || return 3
-		[[ -n "${mode}" ]] && chmod -hP -- "${mode}" "${path}" || exit 4
+		[[ -n "${mode}" ]] && chmod -P -- "${mode}" "${path}" || exit 4
 		#
 		# Check stats for file post-change
 		after="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
 		#
 		# Log diffs bewteen pre and post stats
-		[[ "${before}" != "${after}" ]] &&
-			log w "${path} with \"${before}\" deviated from, and was restored to \"${after}\"."
+		[[ "${before}" != "${after}" ]] && log w "${path} with \"${before}\" deviated from, and was restored to \"${after}\"."
 	done
 }
+export -f perm_fix

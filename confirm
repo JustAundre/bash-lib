@@ -4,8 +4,9 @@ confirm() {
 		clear
 		[[ -n "${preprompt_msg}" ]] && printf -- '%s\n' "${preprompt_msg}"
 		printf "%s? [y/n]: \n" "${1}"
-		read -er answer
+		read -re answer
 		answer="${answer:0:1}"
 	done
 	[[ "${answer}" =~ ^[Yy]$ ]]
 }
+export -f confirm

@@ -18,3 +18,4 @@ compdom() {
 	# If URL to compare exists and matches right-to-left, return success.
 	[[ -n "${repo_url}" && "${repo_url}" =~ ^(.+\."${official_url}"|"${official_url}")$ ]]
 }
+export -f compdom

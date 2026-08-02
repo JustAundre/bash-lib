@@ -46,3 +46,4 @@ log() {
 	# Stop color from leaking & prints newline.
 	printf '%b\n' "${ansii[reset]}"
 }
+export -f log
