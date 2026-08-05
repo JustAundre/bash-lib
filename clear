@@ -4,4 +4,4 @@ function clear() {
 	printf '\n%.0s' "${height[@]}"
 	tput home
 }
-export -f confirm
+export -f clear

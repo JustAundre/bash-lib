@@ -38,15 +38,18 @@ select_fix() {
 					read -rp 'Enter the new group owner: ' group
 				done
 				chown -hc -- "${user}:${group}" "${1}"
-			;;'Change permissions')
+			;;
+			'Change permissions')
 				until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]; do
 					read -rp 'Enter the octal permission: ' perm
 				done
 				chmod -c -- "${perm}" "${1}"
-			;;'Rename node')
+			;;
+			'Rename node')
 				read -rp 'Enter the new name for the node' basename
 				mv -- "${1}" "$(dirname -- "${1}")""${basename}"
-			;;'Delete node')
+			;;
+			'Delete node')
 				rm -rfv -- "${1}"
 			;;
 		esac

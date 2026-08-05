@@ -33,7 +33,8 @@ reconfig() {
 	[[ "${duplicate}" == true ]] && case "${exception}" in
 		replace)
 			sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
-			echo "${1}${delimiter}${2}"[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && : >>"${3}"
+			echo "${1}${delimiter}${2}"
+			[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && : >>"${3}"
 		;;
 		append)
 			echo "${1}${delimiter}${2}" >>"${3}"
@@ -41,7 +42,8 @@ reconfig() {
 		abort)
 			log e "The key \"${1}\" was already defined in \"${3}\". The operation was aborted and \"${1}\" was not set to \"${2}\"."
 			return 2
-		;;*)
+		;;
+		*)
 			log e "The value \"${exception}\" for the -x opt is invalid. The valid values are:"$'\n\t"replace", "append", or "abort".'
 			return 1
 		;;
