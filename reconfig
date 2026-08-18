@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 reconfig() {
 	# Parse arguments
-	while getopts 'd:x:' arg; do
+	while getopts 'd:x:p' arg; do
 		case "${arg}" in
 			d) local delimiter="${OPTARG}";;
 			x) local exception="${OPTARG}";;

@@ -3,7 +3,7 @@ perm_fix() {
 	local errors path before after
 	#
 	# Parse arguments
-	while getopts 'm:o:g:' arg; do
+	while getopts 'm:o:g:f' arg; do
 		case "${arg}" in
 			m) local mode="${OPTARG}";;
 			o) local owner="${OPTARG}";;
