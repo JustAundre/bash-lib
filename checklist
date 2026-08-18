@@ -46,8 +46,7 @@ checklist() {
 	fi
 	read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections >&"${ui}"
 	#
-	# Do nothing with empty responses
-	# Validate user choices & return the choices
+	# Do nothing with empty responses and validate user choices then return the choices.
 	[[ -z "${selections[*]}" ]] && return 0
 	[[ -z "${multi}" && "${#selections[@]}" -gt 1 ]] && return 1
 	for selection in "${selections[@]}"; do
