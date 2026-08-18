@@ -3,12 +3,12 @@ reconfig() {
 	# Parse arguments
 	while getopts 'd:x:p' arg; do
 		case "${arg}" in
-			d) local delimiter="${OPTARG}";;
-			x) local exception="${OPTARG}";;
-			p) local create_nonexistent=true;;
-			*)
-				log e "Invalid argument."
-				return 1
+		d) local delimiter="${OPTARG}" ;;
+		x) local exception="${OPTARG}" ;;
+		p) local create_nonexistent=true ;;
+		*)
+			log e "Invalid argument."
+			return 1
 			;;
 		esac
 	done
@@ -31,21 +31,21 @@ reconfig() {
 	#
 	# Handle duplicate entries accordingly
 	[[ "${duplicate}" == true ]] && case "${exception}" in
-		replace)
-			sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
-			echo "${1}${delimiter}${2}"
-			[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && : >>"${3}"
+	replace)
+		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
+		echo "${1}${delimiter}${2}"
+		[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && : >>"${3}"
 		;;
-		append)
-			echo "${1}${delimiter}${2}" >>"${3}"
+	append)
+		echo "${1}${delimiter}${2}" >>"${3}"
 		;;
-		abort)
-			log e "The key \"${1}\" was already defined in \"${3}\". The operation was aborted and \"${1}\" was not set to \"${2}\"."
-			return 2
+	abort)
+		log e "The key \"${1}\" was already defined in \"${3}\". The operation was aborted and \"${1}\" was not set to \"${2}\"."
+		return 2
 		;;
-		*)
-			log e "The value \"${exception}\" for the -x opt is invalid. The valid values are:"$'\n\t"replace", "append", or "abort".'
-			return 1
+	*)
+		log e "The value \"${exception}\" for the -x opt is invalid. The valid values are:"$'\n\t"replace", "append", or "abort".'
+		return 1
 		;;
 	esac
 }
