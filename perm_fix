@@ -17,10 +17,10 @@ perm_fix() {
 	done
 	#
 	# Validate user:group/octal permissions
-	[[ -n "${owner}" && ! "${owner}" =~ ^[0-9]+$ ]] ||
+	[[ -n "${owner}" && ! "${owner}" =~ ^[0-9]+$ ]] &&
 		getent passwd -- "${owner}" &>/dev/null ||
 		errors+=("${owner} is an invalid user.")
-	[[ -n "${group}" && ! "${group}" =~ ^[0-9]+$ ]] ||
+	[[ -n "${group}" && ! "${group}" =~ ^[0-9]+$ ]] &&
 		getent group -- "${group}" &>/dev/null ||
 		errors+=("${group} is an invalid group.")
 	[[ -n "${mode}" && ! "${mode}" =~ ^[01234567]{3,4} ]] &&

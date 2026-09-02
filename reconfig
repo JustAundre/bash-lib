@@ -32,7 +32,7 @@ reconfig() {
 	# Handle duplicate entries accordingly
 	[[ "${duplicate}" == true ]] && case "${exception}" in
 	replace)
-		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" <"${3}"
+		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" "${3}"
 		echo "${1}${delimiter}${2}"
 		[[ "${create_nonexistent}" == true ]] && mkdir -p "$(dirname "${3}")" && : >>"${3}"
 		;;
