@@ -55,7 +55,7 @@ checklist() {
 			"${selection}" =~ ^[0-9]+$ &&
 			"${selection}" -gt 0 &&
 			"${selection}" -le "${#entries[@]}"
-		]] && echo "${entries["$(("${selection}" - 1 ))"]}"
+		]] && printf '%s\0' "${entries["$(("${selection}" - 1 ))"]}"
 	done
 }
 export -f checklist
