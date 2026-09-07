@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 pause() {
-	local seconds="${1:-10}"
-	read -t "${seconds}" -n1 -rp "(Auto-resuming in ${seconds} seconds...)"$'\n⏸️ ⏸️ ⏸️ ===> ANY TO RESUME <=== ⏸️ ⏸️ ⏸️\n'
-	log i 'Resumed.'
+	local seconds="${1:-10}" SECONDS=0
+	read -t "${seconds}" -n1 -rp "(Auto-resuming in ${seconds} seconds...)"$'\n⏸ ⏸ ⏸ > > PRESS ANY KEY TO RESUME < < ⏸ ⏸ ⏸\n'
+	log i "Resumed script after ${SECONDS} seconds."
 }
 export -f pause
