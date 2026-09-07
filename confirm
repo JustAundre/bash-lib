@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 confirm() {
 	while [[ ! "${answer}" =~ ^[YyNn]$ ]]; do
-		clear
-		[[ -n "${preprompt_msg}" ]] && printf -- '%s\n' "${preprompt_msg}"
+		clear -x
+		[[ -n "${PS3}" ]] && printf -- '%s\n' "${PS3}"
 		printf "%s? [y/n]: \n" "${1}"
 		read -re answer
 		answer="${answer:0:1}"

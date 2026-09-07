@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+
+cl-new() {
+	local ui selection offset=0 total_items
+	exec {ui}>&2
+	#
+	# Grab args
+	local -a entries selections
+	local -i current_index=0
+	while ((${#} > 0)); do
+		case "${1}" in
+		-m|--multi)
+			multi=1
+			shift
+			;;
+		-t|--title)
+			title="${2}"
+			shift 2
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			shift
+			;;
+		*)
+			entries+=("${1}")
+			shift
+			;;
+		esac
+	done
+	total_items=${#entries[@]}
+	#
+	# UI Renderer
+	clear -x >&"${ui}"
+	render_ui() {
+		local -i visible_start=offset visible_end
+		local -i display_count=7
+		#
+		# Keep current_index in view
+		if (( current_index < offset )); then
+			offset=$current_index
+		elif (( current_index >= offset + display_count )); then
+			offset=$((current_index - display_count + 1))
+		fi
+		#
+		# Calculate visible range
+		if ((total_items <= display_count)); then
+			visible_start=0
+			visible_end="$((total_items - 1))"
+			offset=0
+		else
+			visible_end=$((offset + display_count - 1))
+			if ((visible_end >= total_items)); then
+				visible_end=$((total_items - 1))
+				visible_start=$((visible_end - display_count + 1))
+				offset="${visible_start}"
+			else
+				visible_start="${offset}"
+			fi
+		fi
+		[[ -n "${PS3}" ]] && echo "${PS3}"
+		printf '%b%s\n' "${ansii[rev]}" '↑/↓ to scroll | [SPACE] to select | [ENTER] to confirm'
+		if ((multi)); then
+			printf '%s' 'Multi-select -- '
+		else
+			printf '%s' 'Single-select -- '
+		fi
+		printf '%s%b\n' "${title}" "${ansii[reset]}"
+		#
+		# Show scroll indicator (top)
+		if ((offset > 0)); then
+			echo '↑ ↑ ↑'
+		else
+			echo
+		fi
+		#
+		# Display items
+		for ((i = visible_start; i <= visible_end && i < total_items; i++)); do
+			local is_selected=0
+			for sel in "${selections[@]}"; do
+				if [[ ${sel} == "${i}" ]]; then
+					is_selected=1
+					break
+				fi
+			done
+			#
+			# Check if this is the current item (cursor position)
+			if ((i == current_index)); then
+				# Highlight current item with reverse video
+				if ((is_selected)); then
+					printf '\t%b>>> [*] %s%b\n' "${ansii[rev]}" "${entries[$i]}" "${ansii[reset]}"
+				else
+					printf '\t%b>>> [ ] %s%b\n' "${ansii[rev]}" "${entries[$i]}" "${ansii[reset]}"
+				fi
+			else
+				if ((is_selected)); then
+					printf '\t%b[*]%b %s\n' "${ansii[bold]}" "${ansii[reset]}" "${entries[$i]}"
+				else
+					printf '\t[ ] %s\n' "${entries[$i]}"
+				fi
+			fi
+		done
+		#
+		# Show scroll indicator (bottom)
+		if ((visible_end < total_items - 1)); then
+			echo '↓ ↓ ↓'
+		else
+			echo
+		fi
+	}
+	#
+	# Handle keyboard input
+	read_input() {
+		local key key2
+		IFS= read -rsn1 key
+		if [[ ${key} == $'\E' ]]; then
+			IFS= read -rsn2 key2
+			key+="${key2}"
+		fi
+		case "${key}" in
+		# Up arrow
+		$'\E[A')
+			if ((current_index > 0)); then
+				((current_index--))
+			else
+				return 2
+			fi
+			return 1
+		;;
+		#
+		# Down arrow
+		$'\E[B')
+			if ((current_index < total_items - 1)); then
+				((current_index++))
+			else
+				return 2
+			fi
+			return 1
+		;;
+		#
+		# Space - Toggle selection
+		' ')
+			local is_selected=0
+			for ((i = 0; i < ${#selections[@]}; i++)); do
+				if [[ "${selections[$i]}" == "${current_index}" ]]; then
+					is_selected=1
+					unset 'selections[$i]'
+					selections=("${selections[@]}")
+					break
+				fi
+			done
+			if ((!is_selected)); then
+				((multi)) || selections=()
+				selections+=("${current_index}")
+			fi
+			return 1
+		;;
+		#
+		# Enter
+		'')
+			return 0
+		;;
+		#
+		# Unknown input
+		*)
+			return 2
+		;;
+		esac
+	}
+	#
+	# Main loop
+	render_ui >&"${ui}"
+	until read_input; do
+		if ((${?} != 2)); then
+			printf '\033[H\033[J' >&"${ui}"
+			render_ui >&"${ui}"
+		fi
+	done
+	#
+	# Do nothing with empty responses and validate user choices then return the choices.
+	[[ "${#selections[@]}" == 0 ]] && return 0
+	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 1
+	for selection in "${selections[@]}"; do
+		printf '%s\0' "${entries["${selection}"]}"
+	done
+	printf '\033[H\033[J' >&"${ui}"
+}
+export -f cl-new

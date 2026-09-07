@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-checklist() {
+cl-legacy() {
 	local ui item selections selection x=0
 	#
 	# Open a fd for UI text if there isn't already one open.
-	{ [[ ! "${ui}" =~ ^[0-9]+$ ]] || true >&"${ui}"; } && exec {ui}>&2
+	[[ "${ui}" =~ ^[0-9]+$ ]] || exec {ui}>&2
 	#
 	# Grab args
 	local args
@@ -31,19 +31,19 @@ checklist() {
 	local entries=("$@")
 	#
 	# Display options
-	clear >&"${ui}"
-	[[ -n "${preprompt_msg}" ]] && echo "${preprompt_msg}" >&"${ui}"
-	echo "${title}" >&"${ui}"
+	clear -x >&"${ui}"
+	[[ -n "${PS3}" ]] && echo "${PS3}" >&"${ui}"
+	printf "%s\n" "${title}" >&"${ui}"
 	for item in "${entries[@]}"; do
-		x="$((x + 1))"
-		[[ -n "${item}" ]] && echo "    ${x}) ${item}" >&"${ui}"
+		((x++))
+		[[ -n "${item}" ]] && printf "\t%s) %s\n" "${x}" "${item}" >&"${ui}"
 	done
 	#
 	# Determinte selection mode & grab selection(s)
-	if [[ -n "${multi}" ]]; then
-		printf '%s\n' 'Enter your selections—separated by spaces.' '(i.e. "1 4 6 9")' >&"${ui}"
+	if ((multi)); then
+		printf '%s\n' 'Multi-select (i.e. "1 4 6 9")' >&"${ui}"
 	else
-		printf '%s\n' 'Enter a single selection' '(i.e. "5")' >&"${ui}"
+		printf '%s\n' 'Single-select (i.e. "5")' >&"${ui}"
 	fi
 	read -erp 'Type, then press [ENTER] to submit: ' -a selections >&"${ui}"
 	#
@@ -58,4 +58,4 @@ checklist() {
 		]] && printf '%s\0' "${entries["$(("${selection}" - 1 ))"]}"
 	done
 }
-export -f checklist
+export -f cl-legacy
