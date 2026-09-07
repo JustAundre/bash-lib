@@ -2,7 +2,7 @@
 
 cl-new() {
 	# Grab args
-	local ui='' selection offset=0 total_items entries multi=0 title='"Pick a card any card!"'
+	local ui='' selection offset=0 entries multi=0 title='"Pick a card any card!"'
 	exec {ui}>&2
 	local -a entries selections
 	local -i current_index=0
