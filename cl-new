@@ -1,35 +1,32 @@
 #!/usr/bin/env bash
 
 cl-new() {
-	local ui selection offset=0 total_items
-	exec {ui}>&2
-	#
 	# Grab args
+	local ui='' selection offset=0 total_items entries multi=0 title='"Pick a card any card!"'
+	exec {ui}>&2
 	local -a entries selections
 	local -i current_index=0
-	while ((${#} > 0)); do
+	eval set -- "$(getopt --options mt: --longoptions multi,title: -- "$@")"
+	while true; do
 		case "${1}" in
-		-m|--multi)
-			multi=1
-			shift
+			-m|--multi)
+				multi=1
+				shift
 			;;
-		-t|--title)
-			title="${2}"
-			shift 2
+			-t|--title)
+				title="${2}"
+				shift 2
 			;;
-		--)
-			shift
-			break
+			--)
+				shift
+				break
 			;;
-		-*)
-			shift
-			;;
-		*)
-			entries+=("${1}")
-			shift
+			*)
+				break
 			;;
 		esac
 	done
+	entries=("${@}")
 	total_items=${#entries[@]}
 	#
 	# UI Renderer
@@ -114,9 +111,9 @@ cl-new() {
 	# Handle keyboard input
 	read_input() {
 		local key key2
-		IFS= read -rsn1 key
+		IFS= read -sn1 key
 		if [[ ${key} == $'\E' ]]; then
-			IFS= read -rsn2 key2
+			IFS= read -sn2 key2
 			key+="${key2}"
 		fi
 		case "${key}" in
