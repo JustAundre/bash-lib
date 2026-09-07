@@ -27,7 +27,10 @@ cl-new() {
 		esac
 	done
 	entries=("${@}")
-	total_items=${#entries[@]}
+	if ((${#entries[@]} == 0)); then
+		log w 'No items to display for user to select from.'
+		return 1
+	fi
 	#
 	# UI Renderer
 	clear -x >&"${ui}"
@@ -43,14 +46,14 @@ cl-new() {
 		fi
 		#
 		# Calculate visible range
-		if ((total_items <= display_count)); then
+		if ((${#entries[@]} <= display_count)); then
 			visible_start=0
-			visible_end="$((total_items - 1))"
+			visible_end="$((${#entries[@]} - 1))"
 			offset=0
 		else
 			visible_end=$((offset + display_count - 1))
-			if ((visible_end >= total_items)); then
-				visible_end=$((total_items - 1))
+			if ((visible_end >= ${#entries[@]})); then
+				visible_end="$((${#entries[@]} - 1))"
 				visible_start=$((visible_end - display_count + 1))
 				offset="${visible_start}"
 			else
@@ -68,13 +71,13 @@ cl-new() {
 		#
 		# Show scroll indicator (top)
 		if ((offset > 0)); then
-			printf '%b%s from top\t↑  ↑  ↑  ↑  ↑%b\n' "${ansii[dim]}" "$((total_items - (total_items - current_index)))" "${ansii[reset]}"
+			printf '%b%s from top\t↑  ↑  ↑  ↑  ↑%b\n' "${ansii[dim]}" "$((${#entries[@]} - (${#entries[@]} - current_index)))" "${ansii[reset]}"
 		else
-			printf '%b%s from top%b\n' "${ansii[dim]}" "$((total_items - (total_items - current_index)))" "${ansii[reset]}"
+			printf '%b%s from top%b\n' "${ansii[dim]}" "$((${#entries[@]} - (${#entries[@]} - current_index)))" "${ansii[reset]}"
 		fi
 		#
 		# Display items
-		for ((i = visible_start; i <= visible_end && i < total_items; i++)); do
+		for ((i = visible_start; i <= visible_end && i < ${#entries[@]}; i++)); do
 			local is_selected=0
 			for sel in "${selections[@]}"; do
 				if [[ ${sel} == "${i}" ]]; then
@@ -101,10 +104,10 @@ cl-new() {
 		done
 		#
 		# Show scroll indicator (bottom)
-		if ((visible_end < total_items - 1)); then
-			printf '%b%s from bott.\t↓  ↓  ↓  ↓  ↓%b\n' "${ansii[dim]}" "$(((current_index - total_items + 1) * -1))" "${ansii[reset]}"
+		if ((visible_end < ${#entries[@]} - 1)); then
+			printf '%b%s from bott.\t↓  ↓  ↓  ↓  ↓%b\n' "${ansii[dim]}" "$(((current_index - ${#entries[@]} + 1) * -1))" "${ansii[reset]}"
 		else
-			printf '%b%s from bott.%b\n' "${ansii[dim]}" "$(((current_index - total_items + 1) * -1))" "${ansii[reset]}"
+			printf '%b%s from bott.%b\n' "${ansii[dim]}" "$(((current_index - ${#entries[@]} + 1) * -1))" "${ansii[reset]}"
 		fi
 	}
 	#
@@ -129,7 +132,7 @@ cl-new() {
 		#
 		# Down arrow
 		$'\E[B')
-			if ((current_index < total_items - 1)); then
+			if ((current_index < ${#entries[@]} - 1)); then
 				((current_index++))
 			else
 				return 2
@@ -178,7 +181,7 @@ cl-new() {
 	#
 	# Do nothing with empty responses and validate user choices then return the choices.
 	[[ "${#selections[@]}" == 0 ]] && return 0
-	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 1
+	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 2
 	for selection in "${selections[@]}"; do
 		printf '%s\0' "${entries["${selection}"]}"
 	done
