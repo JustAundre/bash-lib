@@ -35,14 +35,13 @@ cl-new() {
 	# UI Renderer
 	clear -x >&"${ui}"
 	render_ui() {
-		local -i visible_start=offset visible_end
-		local -i display_count=7
+		local -i display_count=10 visible_start=offset visible_end
 		#
 		# Keep current_index in view
 		if (( current_index < offset )); then
 			offset=$current_index
 		elif (( current_index >= offset + display_count )); then
-			offset=$((current_index - display_count + 1))
+			offset="$((current_index - display_count + 1))"
 		fi
 		#
 		# Calculate visible range
@@ -113,10 +112,10 @@ cl-new() {
 	#
 	# Handle keyboard input
 	read_input() {
-		local key key2
-		IFS= read -sn1 key
+		local key key2 IFS=''
+		read -sn1 key
 		if [[ ${key} == $'\E' ]]; then
-			IFS= read -sn2 key2
+			read -sn2 key2
 			key+="${key2}"
 		fi
 		case "${key}" in
@@ -171,20 +170,22 @@ cl-new() {
 	}
 	#
 	# Main loop
-	render_ui >&"${ui}"
-	until read_input; do
-		if ((${?} != 2)); then
-			printf '\033[H\033[J' >&"${ui}"
-			render_ui >&"${ui}"
-		fi
-	done
+	{
+		render_ui
+		until read_input; do
+			if ((${?} != 2)); then
+				printf '\033[H\033[J'
+				render_ui
+			fi
+		done
+		printf '\033[H\033[J'
+	} >&"${ui}"
 	#
-	# Do nothing with empty responses and validate user choices then return the choices.
+	# Error on no response. Validate selections and return null-delimited selections.
 	[[ "${#selections[@]}" == 0 ]] && return 0
 	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 2
 	for selection in "${selections[@]}"; do
 		printf '%s\0' "${entries["${selection}"]}"
 	done
-	printf '\033[H\033[J' >&"${ui}"
 }
 export -f cl-new
