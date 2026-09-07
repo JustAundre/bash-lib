@@ -68,9 +68,9 @@ cl-new() {
 		#
 		# Show scroll indicator (top)
 		if ((offset > 0)); then
-			echo '↑ ↑ ↑'
+			printf '%b%s from top\t↑  ↑  ↑  ↑  ↑%b\n' "${ansii[dim]}" "$((total_items - (total_items - current_index)))" "${ansii[reset]}"
 		else
-			echo
+			printf '%b%s from top%b\n' "${ansii[dim]}" "$((total_items - (total_items - current_index)))" "${ansii[reset]}"
 		fi
 		#
 		# Display items
@@ -87,24 +87,24 @@ cl-new() {
 			if ((i == current_index)); then
 				# Highlight current item with reverse video
 				if ((is_selected)); then
-					printf '\t%b>>> [*] %s%b\n' "${ansii[rev]}" "${entries[$i]}" "${ansii[reset]}"
+					printf '  %b> [*] %s%b\n' "${ansii[rev]}" "${entries[${i}]}" "${ansii[reset]}"
 				else
-					printf '\t%b>>> [ ] %s%b\n' "${ansii[rev]}" "${entries[$i]}" "${ansii[reset]}"
+					printf '  %b> [ ] %s%b\n' "${ansii[rev]}" "${entries[${i}]}" "${ansii[reset]}"
 				fi
 			else
 				if ((is_selected)); then
-					printf '\t%b[*]%b %s\n' "${ansii[bold]}" "${ansii[reset]}" "${entries[$i]}"
+					printf '    %b[*]%b %s\n' "${ansii[bold]}" "${ansii[reset]}" "${entries[${i}]}"
 				else
-					printf '\t[ ] %s\n' "${entries[$i]}"
+					printf '    [ ] %s\n' "${entries[${i}]}"
 				fi
 			fi
 		done
 		#
 		# Show scroll indicator (bottom)
 		if ((visible_end < total_items - 1)); then
-			echo '↓ ↓ ↓'
+			printf '%b%s from bott.\t↓  ↓  ↓  ↓  ↓%b\n' "${ansii[dim]}" "$(((current_index - total_items + 1) * -1))" "${ansii[reset]}"
 		else
-			echo
+			printf '%b%s from bott.%b\n' "${ansii[dim]}" "$(((current_index - total_items + 1) * -1))" "${ansii[reset]}"
 		fi
 	}
 	#
