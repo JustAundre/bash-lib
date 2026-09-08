@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 confirm() {
+	local answer=''
 	until [[ "${answer}" =~ ^[YyNn]$ ]]; do
 		clear -x
 		[[ -n "${PS3}" ]] && printf -- '%s\n' "${PS3}"
