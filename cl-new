@@ -187,5 +187,6 @@ cl-new() {
 	for selection in "${selections[@]}"; do
 		printf '%s\0' "${entries["${selection}"]}"
 	done
+	unset read_input render_ui
 }
 export -f cl-new
