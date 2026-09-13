@@ -2,27 +2,27 @@
 
 cl-new() {
 	# Grab args
-	local ui='' selection offset=0 entries multi=0 title='"Pick a card any card!"'
+	local ui='' selection offset=0 entries multi=0 required=1 PS2="${PS2:-\"Pick a card any card!\"}"
 	exec {ui}>&2
 	local -a entries selections
 	local -i current_index=0
-	eval set -- "$(getopt --options mt: --longoptions multi,title: -- "$@")"
+	eval set -- "$(getopt --options mo --longoptions multi,optional -- "$@")"
 	while true; do
 		case "${1}" in
-			-m|--multi)
-				multi=1
-				shift
+		-m | --multi)
+			multi=1
+			shift
 			;;
-			-t|--title)
-				title="${2}"
-				shift 2
+		-o | --optional)
+			optional=1
+			shift
 			;;
-			--)
-				shift
-				break
+		--)
+			shift
+			break
 			;;
-			*)
-				break
+		*)
+			break
 			;;
 		esac
 	done
@@ -31,6 +31,7 @@ cl-new() {
 		log w 'No items to display for user to select from.'
 		return 1
 	fi
+	((optional)) || PS2="Selection required * ${PS2}"
 	#
 	# UI Renderer
 	clear -x >&"${ui}"
@@ -38,9 +39,9 @@ cl-new() {
 		local -i display_count=10 visible_start=offset visible_end
 		#
 		# Keep current_index in view
-		if (( current_index < offset )); then
+		if ((current_index < offset)); then
 			offset=$current_index
-		elif (( current_index >= offset + display_count )); then
+		elif ((current_index >= offset + display_count)); then
 			offset="$((current_index - display_count + 1))"
 		fi
 		#
@@ -66,7 +67,7 @@ cl-new() {
 		else
 			printf '%s' 'Single-select -- '
 		fi
-		printf '%s%b\n' "${title}" "${ansii[reset]}"
+		printf '%s%b\n' "${PS2}" "${ansii[reset]}"
 		#
 		# Show scroll indicator (top)
 		if ((offset > 0)); then
@@ -127,7 +128,7 @@ cl-new() {
 				return 2
 			fi
 			return 1
-		;;
+			;;
 		#
 		# Down arrow
 		$'\E[B')
@@ -137,7 +138,7 @@ cl-new() {
 				return 2
 			fi
 			return 1
-		;;
+			;;
 		#
 		# Space - Toggle selection
 		' ')
@@ -150,22 +151,23 @@ cl-new() {
 					break
 				fi
 			done
-			if ((!is_selected)); then
+			if ((! is_selected)); then
 				((multi)) || selections=()
 				selections+=("${current_index}")
 			fi
 			return 1
-		;;
+			;;
 		#
 		# Enter
 		'')
+			((${#selections[@]})) || return 2
 			return 0
-		;;
+			;;
 		#
 		# Unknown input
 		*)
 			return 2
-		;;
+			;;
 		esac
 	}
 	#
@@ -183,7 +185,7 @@ cl-new() {
 	#
 	# Error on no response. Validate selections and return null-delimited selections.
 	[[ "${#selections[@]}" == 0 ]] && return 0
-	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 2
+	((! multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 2
 	for selection in "${selections[@]}"; do
 		printf '%s\0' "${entries["${selection}"]}"
 	done
