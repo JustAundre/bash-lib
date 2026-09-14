@@ -2,7 +2,7 @@
 
 cl-new() {
 	# Grab args
-	local ui='' selection offset=0 entries multi=0 required=1 PS2="${PS2:-\"Pick a card any card!\"}"
+	local ui='' selection offset=0 entries multi=0 optional=1 PS2="${PS2:-\"Pick a card any card!\"}"
 	exec {ui}>&2
 	local -a entries selections
 	local -i current_index=0
@@ -90,15 +90,15 @@ cl-new() {
 			if ((i == current_index)); then
 				# Highlight current item with reverse video
 				if ((is_selected)); then
-					printf '  %b> [*] %s%b\n' "${ansii[rev]}" "${entries[${i}]}" "${ansii[reset]}"
+					printf '  %b> [*] %s%b\n' "${ansii[rev]}" "${entries["${i}"]}" "${ansii[reset]}"
 				else
-					printf '  %b> [ ] %s%b\n' "${ansii[rev]}" "${entries[${i}]}" "${ansii[reset]}"
+					printf '  %b> [ ] %s%b\n' "${ansii[rev]}" "${entries["${i}"]}" "${ansii[reset]}"
 				fi
 			else
 				if ((is_selected)); then
-					printf '    %b[*]%b %s\n' "${ansii[bold]}" "${ansii[reset]}" "${entries[${i}]}"
+					printf '    %b[*]%b %s\n' "${ansii[bold]}" "${ansii[reset]}" "${entries["${i}"]}"
 				else
-					printf '    [ ] %s\n' "${entries[${i}]}"
+					printf '    [ ] %s\n' "${entries["${i}"]}"
 				fi
 			fi
 		done
@@ -113,12 +113,12 @@ cl-new() {
 	#
 	# Handle keyboard input
 	read_input() {
+		local key key2 IFS='' existing_trap
 		existing_trap="$(trap -p SIGINT)"
-		trap 'trap "${existing_trap}" SIGINT; return 3' SIGINT
-		local key key2 IFS=''
-		read -sn1 key || return 3
+		trap 'trap "${existing_trap}" SIGINT; return 130' SIGINT
+		read -sn1 key || return 130
 		if [[ ${key} == $'\E' ]]; then
-			read -sn2 key2 || return 3
+			read -sn2 key2 || return 130
 			key+="${key2}"
 		fi
 		trap '${existing_trap}' SIGINT
@@ -179,8 +179,8 @@ cl-new() {
 		render_ui
 		until read_input; do
 			exit_code="${?}"
-			if ((exit_code == 3)); then
-				return 3
+			if ((exit_code == 130)); then
+				return 130
 			elif ((exit_code != 2)); then
 				printf '\033[H\033[J'
 				render_ui
