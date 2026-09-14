@@ -20,9 +20,9 @@ log() {
 	#
 	# Parse input
 	case "${type}" in
-	i) printf -- '%bi: %s%b\n' "${ansii[rev]}${ansii[cyan]}" "${input[@]}" "${ansii[reset]}" ;;
-	w) printf -- '%bW: %s%b\n' "${ansii[rev]}${ansii[yellow]}" "${input[@]}" "${ansii[reset]}" >&2 ;;
-	e) printf -- '%bE: %s%b\n' "${ansii[rev]}${ansii[red]}" "${input[@]}" "${ansii[reset]}" >&2 ;;
+	i) printf -- "${ansii[rev]}${ansii[cyan]}i: %s${ansii[reset]}\n" "${input[@]}" ;;
+	w) printf -- "${ansii[rev]}${ansii[yellow]}W: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
+	e) printf -- "${ansii[rev]}${ansii[red]}E: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
 	*)
 		log e "Invalid log type \"${type}\". Valid options are \"i\" (info), \"w\" (warning), or \"e\" (error)."
 		return 3

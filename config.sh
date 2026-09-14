@@ -10,3 +10,4 @@ ansii[yellow]='\e[33m'
 ansii[red]='\e[31m'
 ansii[reset]='\e[0m'
 ansii[dim]='\e[2m'
+export ansii

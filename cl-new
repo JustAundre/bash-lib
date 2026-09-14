@@ -113,12 +113,15 @@ cl-new() {
 	#
 	# Handle keyboard input
 	read_input() {
+		existing_trap="$(trap -p SIGINT)"
+		trap 'trap "${existing_trap}" SIGINT; return 3' SIGINT
 		local key key2 IFS=''
-		read -sn1 key
+		read -sn1 key || return 3
 		if [[ ${key} == $'\E' ]]; then
-			read -sn2 key2
+			read -sn2 key2 || return 3
 			key+="${key2}"
 		fi
+		trap '${existing_trap}' SIGINT
 		case "${key}" in
 		# Up arrow
 		$'\E[A')
@@ -175,7 +178,10 @@ cl-new() {
 	{
 		render_ui
 		until read_input; do
-			if ((${?} != 2)); then
+			exit_code="${?}"
+			if ((exit_code == 3)); then
+				return 3
+			elif ((exit_code != 2)); then
 				printf '\033[H\033[J'
 				render_ui
 			fi
