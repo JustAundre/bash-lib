@@ -2,10 +2,8 @@
 
 cl-new() {
 	# Grab args
-	local ui='' selection offset=0 entries multi=0 optional=1 PS2="${PS2:-\"Pick a card any card!\"}"
+	local ui='' selection offset=0 current_index=0 multi=0 optional=1 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}"
 	exec {ui}>&2
-	local -a entries selections
-	local -i current_index=0
 	eval set -- "$(getopt --options mo --longoptions multi,optional -- "$@")"
 	while true; do
 		case "${1}" in
@@ -40,7 +38,7 @@ cl-new() {
 		#
 		# Keep current_index in view
 		if ((current_index < offset)); then
-			offset=$current_index
+			offset="${current_index}"
 		elif ((current_index >= offset + display_count)); then
 			offset="$((current_index - display_count + 1))"
 		fi
