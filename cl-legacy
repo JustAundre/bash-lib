@@ -1,51 +1,77 @@
 #!/usr/bin/env bash
 cl-legacy() {
-	local ui item selections selection x=0
-	#
-	# Open a fd for UI text if there isn't already one open.
-	[[ "${ui}" =~ ^[0-9]+$ ]] || exec {ui}>&2
+	local ui='' item selections selection x=0 entries
+	exec {ui}>&2
 	#
 	# Grab args
-	local args
-	args="$(getopt --options mt: --longoptions multi,title: -- "$@")"
-	eval set -- "${args[*]}"
-	while true; do
-		case "${1}" in
-			-m|--multi)
-				local multi=1
-				shift
+	while ((${#} > 0)); do
+	  	case "${1}" in
+		--multi)
+			multi=1
+			shift
 			;;
-			-t|--title)
-				local title="${2}"
-				shift 2
+		--optional)
+			optional=1
+			shift
 			;;
-			--)
-				shift
-				break
+		--)
+			shift
+			break
 			;;
-			*)
-				break
+		--*)
+			log e "Unknown long-form option: ${1}"
+			return 2
+			;;
+		-*)
+			for ((i=1; i<${#1}; i++)); do
+				case "${1:i:1}" in
+				m)
+					multi=1
+					;;
+				o)
+					optional=1
+					;;
+				*)
+					log e "Unknown short-form option: -${1:i:1}"
+					return 2
+					;;
+				esac
+			done
+			shift
+			;;
+		*)
+			break
 			;;
 		esac
 	done
-	local entries=("$@")
+	entries=("$@")
 	#
 	# Display options
-	clear -x >&"${ui}"
-	[[ -n "${PS3}" ]] && echo "${PS3}" >&"${ui}"
-	printf "%s\n" "${title}" >&"${ui}"
-	for item in "${entries[@]}"; do
-		((x++))
-		[[ -n "${item}" ]] && printf "\t%s) %s\n" "${x}" "${item}" >&"${ui}"
-	done
-	#
-	# Determinte selection mode & grab selection(s)
-	if ((multi)); then
-		printf '%s\n' 'Multi-select (i.e. "1 4 6 9")' >&"${ui}"
-	else
-		printf '%s\n' 'Single-select (i.e. "5")' >&"${ui}"
-	fi
-	read -erp 'Type, then press [ENTER] to submit: ' -a selections >&"${ui}"
+	{
+		clear -x
+		[[ -n "${PS3}" ]] && echo "${PS3}"
+		printf "%s\n" "${PS2}"
+		for item in "${entries[@]}"; do
+			((x++))
+			[[ -n "${item}" ]] && printf "\t%s) %s\n" "${x}" "${item}"
+		done
+		#
+		# Determinte selection mode & grab selection(s)
+		if ((multi)); then
+			printf '%s' 'Multi-select (i.e. "1 4 6 9") '
+		else
+			printf '%s' 'Single-select (i.e. "5") '
+		fi
+		if ((optional)); then
+			printf '%s\n' '* Selection Required'
+		else
+			echo
+		fi
+		existing_trap="$(trap -p SIGINT)"
+		trap 'trap "${existing_trap}" SIGINT; return 130' SIGINT
+		read -erp 'Type, then press [ENTER] to submit: ' -a selections
+		trap '${existing_trap}' SIGINT
+	} >&"${ui}"
 	#
 	# Do nothing with empty responses and validate user choices then return the choices.
 	[[ "${#selections[@]}" == 0 ]] && return 0

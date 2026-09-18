@@ -4,20 +4,40 @@ cl-new() {
 	# Grab args
 	local ui='' selection offset=0 current_index=0 multi=0 optional=1 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}"
 	exec {ui}>&2
-	eval set -- "$(getopt --options mo --longoptions multi,optional -- "$@")"
-	while true; do
-		case "${1}" in
-		-m | --multi)
+	while ((${#} > 0)); do
+	  	case "${1}" in
+		--multi)
 			multi=1
 			shift
 			;;
-		-o | --optional)
+		--optional)
 			optional=1
 			shift
 			;;
 		--)
 			shift
 			break
+			;;
+		--*)
+			log e "Unknown long-form option: ${1}"
+			return 2
+			;;
+		-*)
+			for ((i=1; i<${#1}; i++)); do
+				case "${1:i:1}" in
+				m)
+					multi=1
+					;;
+				o)
+					optional=1
+					;;
+				*)
+					log e "Unknown short-form option: -${1:i:1}"
+					return 2
+					;;
+				esac
+			done
+			shift
 			;;
 		*)
 			break
