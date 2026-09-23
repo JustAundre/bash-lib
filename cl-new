@@ -2,7 +2,7 @@
 
 cl-new() {
 	# Grab args
-	local ui='' selection offset=0 current_index=0 multi=0 optional=1 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}"
+	local ui='' selection offset=0 current_index=0 multi=0 optional=0 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}"
 	exec {ui}>&2
 	while ((${#} > 0)); do
 	  	case "${1}" in
@@ -89,7 +89,7 @@ cl-new() {
 		#
 		# Show scroll indicator (top)
 		if ((offset > 0)); then
-			printf '%b%s/%b\t\t↑  ↑  ↑  ↑  ↑%b\n' "${ansii[dim]}" "$((${#entries[@]} - (${#entries[@]} - current_index) + 1))" "${#entries[@]}" "${ansii[reset]}"
+			printf '%b%s/%b\t\t▲  ▲  ▲  ▲  ▲%b\n' "${ansii[dim]}" "$((${#entries[@]} - (${#entries[@]} - current_index) + 1))" "${#entries[@]}" "${ansii[reset]}"
 		else
 			printf '%b%s/%s%b\n' "${ansii[dim]}" "$((${#entries[@]} - (${#entries[@]} - current_index) + 1))" "${#entries[@]}" "${ansii[reset]}"
 		fi
@@ -123,7 +123,7 @@ cl-new() {
 		#
 		# Show scroll indicator (bottom)
 		if ((visible_end < ${#entries[@]} - 1)); then
-			printf '%b\t\t↓  ↓  ↓  ↓  ↓%b\n' "${ansii[dim]}" "${ansii[reset]}"
+			printf '%b\t\t▼  ▼  ▼  ▼  ▼%b\n' "${ansii[dim]}" "${ansii[reset]}"
 		else
 			echo
 		fi
@@ -181,8 +181,8 @@ cl-new() {
 		#
 		# Enter
 		'')
-			((${#selections[@]})) || return 2
-			return 0
+			((optional || ${#selections[@]})) && return 0
+			return 2
 			;;
 		#
 		# Unknown input
@@ -210,9 +210,13 @@ cl-new() {
 	# Error on no response. Validate selections and return null-delimited selections.
 	[[ "${#selections[@]}" == 0 ]] && return 0
 	((! multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 2
-	for selection in "${selections[@]}"; do
-		printf '%s\0' "${entries["${selection}"]}"
-	done
+	if ((multi)); then
+		for selection in "${selections[@]}"; do
+			printf '%s\0' "${entries["${selection}"]}"
+		done
+	else
+		printf '%s' "${entries["${selections[0]}"]}"
+	fi
 	unset read_input render_ui
 }
 export -f cl-new

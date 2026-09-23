@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cl-legacy() {
-	local ui='' item selections selection x=0 entries
+	local ui='' item selections selection x=0 entries multi=0 optional=0
 	exec {ui}>&2
 	#
 	# Grab args
@@ -69,19 +69,25 @@ cl-legacy() {
 		fi
 		existing_trap="$(trap -p SIGINT)"
 		trap 'trap "${existing_trap}" SIGINT; return 130' SIGINT
-		read -erp 'Type, then press [ENTER] to submit: ' -a selections
+		if ((!optional)); then
+			printf 'Type, then press [ENTER] to submit: '
+			while ((!${#selections[@]})); do
+				read -era selections
+			done
+		else
+			read -erp 'Type, then press [ENTER] to submit: ' -a selections
+		fi
 		trap '${existing_trap}' SIGINT
 	} >&"${ui}"
 	#
 	# Do nothing with empty responses and validate user choices then return the choices.
-	[[ "${#selections[@]}" == 0 ]] && return 0
 	((!multi)) && [[ "${#selections[@]}" -gt 1 ]] && return 1
-	for selection in "${selections[@]}"; do
-		[[
-			"${selection}" =~ ^[0-9]+$ &&
-			"${selection}" -gt 0 &&
-			"${selection}" -le "${#entries[@]}"
-		]] && printf '%s\0' "${entries["$(("${selection}" - 1 ))"]}"
-	done
+	if ((multi)); then
+		for selection in "${selections[@]}"; do
+			printf '%s\0' "${entries["$(("${selection}" - 1 ))"]}"
+		done
+	else
+		printf '%s' "${entries["${selections[0]}"]}"
+	fi
 }
 export -f cl-legacy
