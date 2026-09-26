@@ -2,7 +2,6 @@
 confirm() {
 	local answer=''
 	until [[ "${answer}" =~ ^[YyNn]$ ]]; do
-		clear -x
 		[[ -n "${PS3}" ]] && printf -- '%s\n' "${PS3}"
 		printf "%s? [y/n]: \n" "${1}"
 		read -e answer

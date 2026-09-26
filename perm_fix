@@ -1,30 +1,37 @@
 #!/usr/bin/env bash
 perm_fix() {
-	local errors path before after
+	local errors path before after mode owner group force=0
 	#
 	# Parse arguments
 	while getopts 'm:o:g:f' arg; do
 		case "${arg}" in
-			m) local mode="${OPTARG}";;
-			o) local owner="${OPTARG}";;
-			g) local group="${OPTARG}";;
-			f) local force=true;;
+			m)
+				mode="${OPTARG}"
+				[[ "${mode}" =~ ^[01234567]{3,4}$ ]] ||
+					errors+=("perm_fix: \"${mode}\" is an invalid octal mode.")
+				;;
+			o)
+				owner="${OPTARG}"
+				[[ "${owner}" =~ ^[0-9]+$ ]] ||
+					getent passwd -- "${owner}" &> /dev/null ||
+					errors+=("perm_fix: \"${owner}\" is an invalid user.")
+				;;
+			g)
+				group="${OPTARG}"
+				[[ "${group}" =~ ^[0-9]+$ ]] ||
+					getent group -- "${group}" &> /dev/null ||
+					errors+=("perm_fix: \"${group}\" is an invalid group.")
+				;;
+			f) force=1 ;;
 			*)
-				log e "Invalid opt."
+				log e "perm_fix: Invalid option \"${arg}\"."
 				return 1
 			;;
 		esac
 	done
-	#
-	# Validate user:group/octal permissions
-	[[ -n "${owner}" && ! "${owner}" =~ ^[0-9]+$ ]] &&
-		getent passwd -- "${owner}" &>/dev/null ||
-		errors+=("${owner} is an invalid user.")
-	[[ -n "${group}" && ! "${group}" =~ ^[0-9]+$ ]] &&
-		getent group -- "${group}" &>/dev/null ||
-		errors+=("${group} is an invalid group.")
-	[[ -n "${mode}" && ! "${mode}" =~ ^[01234567]{3,4} ]] &&
-		errors+=("${mode} is an invalid octal mode.")
+	if ! ((${#mode} + ${#owner} + ${#group} || ${#*})); then
+		errors+=('perm_fix: Missing operand')
+	fi
 	if [[ "${#errors[@]}" -ge 1 ]]; then
 		log e "${errors[@]}"
 		return 1
@@ -34,29 +41,31 @@ perm_fix() {
 	shift "$((OPTIND - 1))"
 	#
 	# Iterate over every path
-	for path in "$@"; do
+	for path in "${@}"; do
 		# Validate path
 		[[ -L "${path}" ]] && log w "\"${path}\" is a symlink to \"$(realpath -- "${path}")\"."
-		[[ -L "${path}" && "${force}" == true ]] && { log e 'Refused to process symlinks without the "-f" opt...'; return 2; }
+		if [[ -L "${path}" ]] && ((force)); then
+			log e 'perm_fix: Refused to process symlink without option -f.'
+			return 2
+		fi
 		#
 		# Create non-existent files
 		if [[ ! -e "${path}" ]]; then
-			mkdir -- -p "$(dirname -- "${path}")"
-			: >>"${path}"
+			log e "File ${path@Q} doesn't exist."
+			return 5
 		fi
 		#
-		# Save stats for file pre-change
-		before="$(stat -- -c '%a %u/%U:%g/%G' "${path}")"
-		#
 		# Attempt the change
-		chown -- -h "${owner}:${group}" "${path}" || return 3
-		[[ -n "${mode}" ]] && chmod -- "${mode}" "${path}" || return 4
-		#
-		# Check stats for file post-change
-		after="$(stat -- -c '%a %u/%U:%g/%G' "${path}")"
-		#
-		# Log diffs bewteen pre and post stats
-		[[ "${before}" != "${after}" ]] && log w "${path} with \"${before}\" deviated from, and was restored to \"${after}\"."
+		if [[ -n "${owner}" && -n "${group}" ]]; then
+			chown -hv -- "${owner}:${group}" "${path}" || return 3
+		elif [[ -n "${owner}" && -z "${group}" ]]; then
+			chown -hv -- "${owner}" "${path}" || return 3
+		elif [[ -z "${owner}" && -n "${group}" ]]; then
+			chgrp -hv -- "${group}" "${path}" || return 3
+		fi
+		if [[ -n "${mode}" ]]; then
+			chmod -v -- "${mode}" "${path}" || return 4
+		fi
 	done
 }
 export -f perm_fix
