@@ -21,6 +21,7 @@ find() {
 			args+=("${arg}")
 		fi
 	done
+	[[ "${args[-1]}" == '-o' ]] && args+=(-print)
 	command find "${args[@]}"
 }
 export -f find

@@ -1,35 +1,40 @@
 #!/usr/bin/env bash
 reconfig() {
 	# Parse arguments
-	local delimiter=' ' exception='abort' create_nonexistent=0
+	local delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0
 	while getopts 'd:x:p' arg; do
 		case "${arg}" in
-		d) delimiter="${OPTARG}" ;;
-		x) exception="${OPTARG}" ;;
-		p) create_nonexistent=1 ;;
+		d)
+			delimiter="${OPTARG}"
+			shift 2
+			;;
+		x)
+			exception="${OPTARG}"
+			shift 2
+			;;
+		p)
+			create_nonexistent=1
+			shift
+			;;
 		*)
-			log e "Invalid shortform option."
+			log e "perm_fix: invalid shortform option: ${arg@Q}"
 			return 1
 			;;
 		esac
 	done
-	shift "$((OPTIND - 1))"
 	#
 	# Create non-existent path if specified.
-	if [[ -f "${3}" ]] || ((create_nonexistent)); then
+	[[ -f "${3}" ]] && if ((create_nonexistent)); then
 		mkdir -p "$(dirname "${3}")" && true >> "${3}"
 	elif [[ -d "${3}" ]]; then
-		log e "\"${3}\" is a directory!"
+		log e "reconfig: cannot write to a directory: ${3@Q}"
 	else
-		log e "The provided path \"${3}\" doesn't exist!"
+		log e "reconfig: ${3@Q} doesn't exist."
 		return 3
 	fi
 	#
-	# Detect duplicates
-	local duplicate=0
-	grep -qE "^[^#].*${1}${delimiter}.*$" "${3}" && duplicate=1
-	#
 	# Handle duplicate entries accordingly
+	grep -qE "^[^#].*${1}${delimiter}.*$" "${3}" && duplicate=1
 	((duplicate)) && case "${exception}" in
 	replace)
 		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" "${3}"
@@ -40,11 +45,11 @@ reconfig() {
 		return
 		;;
 	abort)
-		log e "The key \"${1}\" was already defined in \"${3}\". The operation was aborted and \"${1}\" was not set to \"${2}\"."
+		log e "perm_fix: operation aborted: ${1@Q} was already defined in ${3@Q}."
 		return 2
 		;;
 	*)
-		log e "The value \"${exception}\" for the -x opt is invalid. The valid values are:"$'\n\t"replace", "append", or "abort".'
+		log e "${exception} is not a valid value for -x. Valid values are:"$'\n\t"replace", "append", or "abort".'
 		return 1
 		;;
 	esac

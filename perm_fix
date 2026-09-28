@@ -1,71 +1,75 @@
 #!/usr/bin/env bash
 perm_fix() {
-	local errors path before after mode owner group force=0
-	#
 	# Parse arguments
+	local OPTIND errors=() path mode owner group force=0
 	while getopts 'm:o:g:f' arg; do
 		case "${arg}" in
-			m)
-				mode="${OPTARG}"
-				[[ "${mode}" =~ ^[01234567]{3,4}$ ]] ||
-					errors+=("perm_fix: \"${mode}\" is an invalid octal mode.")
-				;;
-			o)
-				owner="${OPTARG}"
-				[[ "${owner}" =~ ^[0-9]+$ ]] ||
-					getent passwd -- "${owner}" &> /dev/null ||
-					errors+=("perm_fix: \"${owner}\" is an invalid user.")
-				;;
-			g)
-				group="${OPTARG}"
-				[[ "${group}" =~ ^[0-9]+$ ]] ||
-					getent group -- "${group}" &> /dev/null ||
-					errors+=("perm_fix: \"${group}\" is an invalid group.")
-				;;
-			f) force=1 ;;
-			*)
-				log e "perm_fix: Invalid option \"${arg}\"."
-				return 1
+		m)
+			mode="${OPTARG}"
+			[[ "${mode}" =~ ^[01234567]{3,4}$ ]] ||
+				errors+=("perm_fix: \"${mode}\" is an invalid octal mode.")
+			shift 2
 			;;
+		o)
+			owner="${OPTARG}"
+			[[ "${owner}" =~ ^[0-9]+$ ]] ||
+				getent passwd -- "${owner}" &> /dev/null ||
+				errors+=("perm_fix: \"${owner}\" is an invalid user.")
+			shift 2
+			;;
+		g)
+			group="${OPTARG}"
+			[[ "${group}" =~ ^[0-9]+$ ]] ||
+				getent group -- "${group}" &> /dev/null ||
+				errors+=("perm_fix: \"${group}\" is an invalid group.")
+			shift 2
+			;;
+		f)
+			force=1
+			shift
+			;;
+		*)
+			log e "perm_fix: Invalid option \"${arg}\"."
+			return 1
+		;;
 		esac
 	done
-	if ! ((${#mode} + ${#owner} + ${#group} || ${#*})); then
-		errors+=('perm_fix: Missing operand')
+	#
+	# Iterate over every path
+	paths=("${@}")
+	for ((i=0; i<${#paths[@]}; i++)); do
+		# Validate path
+		if [[ ! -e ${paths[${i}]} ]]; then
+			log e "perm_fix: ${paths["${i}"]@Q} doesn't exist."
+			unset "paths[${i}]"
+		fi
+		if [[ -L ${paths[${i}]} ]] && ((!force)); then
+			log e 'perm_fix: Refused to process symlink without option -f.'
+			unset "paths[${i}]"
+		fi
+		[[ -L ${path} ]] && log w "perm_fix: \"${paths[${i}]@Q}\" is a symlink to \"$(realpath -- "${paths["${i}"]}")\"."
+	done
+	#
+	# Validate args
+	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
+		errors+=('perm_fix: Insufficient operand(s)')
 	fi
-	if [[ "${#errors[@]}" -ge 1 ]]; then
+	if ((${#errors[@]})); then
 		log e "${errors[@]}"
 		return 1
 	fi
+	((${#paths[@]})) || return 5
 	#
-	# Shift by the amount of getopts to get our paths
-	shift "$((OPTIND - 1))"
-	#
-	# Iterate over every path
-	for path in "${@}"; do
-		# Validate path
-		[[ -L "${path}" ]] && log w "\"${path}\" is a symlink to \"$(realpath -- "${path}")\"."
-		if [[ -L "${path}" ]] && ((force)); then
-			log e 'perm_fix: Refused to process symlink without option -f.'
-			return 2
-		fi
-		#
-		# Create non-existent files
-		if [[ ! -e "${path}" ]]; then
-			log e "File ${path@Q} doesn't exist."
-			return 5
-		fi
-		#
-		# Attempt the change
-		if [[ -n "${owner}" && -n "${group}" ]]; then
-			chown -hv -- "${owner}:${group}" "${path}" || return 3
-		elif [[ -n "${owner}" && -z "${group}" ]]; then
-			chown -hv -- "${owner}" "${path}" || return 3
-		elif [[ -z "${owner}" && -n "${group}" ]]; then
-			chgrp -hv -- "${group}" "${path}" || return 3
-		fi
-		if [[ -n "${mode}" ]]; then
-			chmod -v -- "${mode}" "${path}" || return 4
-		fi
-	done
+	# Apply changes
+	if [[ -n ${owner} && -n ${group} ]]; then
+		printf '%s\0' "${paths[@]}" | xargs -0 -L 250 chown -c -- "${owner}:${group}" || return 3
+	elif [[ -n ${owner} && -z ${group} ]]; then
+		printf '%s\0' "${paths[@]}" | xargs -0 -L 250 chown -c -- "${owner}" || return 3
+	elif [[ -z ${owner} && -n ${group} ]]; then
+		printf '%s\0' "${paths[@]}" | xargs -0 -L 250 chgrp -c -- "${group}" || return 3
+	fi
+	if [[ -n ${mode} ]]; then
+		printf '%s\0' "${paths[@]}" | xargs -0 -L 250 chmod -c -- "${mode}" || return 4
+	fi
 }
 export -f perm_fix
