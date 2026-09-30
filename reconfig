@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 reconfig() {
 	# Parse arguments
-	local delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0
+	local OPTIND=1 delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0
 	while getopts 'd:x:p' arg; do
 		case "${arg}" in
 		d)
 			delimiter="${OPTARG}"
-			shift 2
 			;;
 		x)
 			exception="${OPTARG}"
-			shift 2
 			;;
 		p)
 			create_nonexistent=1
-			shift
 			;;
 		*)
 			log e "perm_fix: invalid short-form option: ${arg@Q}"
@@ -22,6 +19,7 @@ reconfig() {
 			;;
 		esac
 	done
+	shift "$((OPTIND - 1))"
 	#
 	# Create non-existent path if specified.
 	[[ -f "${3}" ]] || if ((create_nonexistent)); then
