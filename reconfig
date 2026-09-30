@@ -17,7 +17,7 @@ reconfig() {
 			shift
 			;;
 		*)
-			log e "perm_fix: invalid shortform option: ${arg@Q}"
+			log e "perm_fix: invalid short-form option: ${arg@Q}"
 			return 1
 			;;
 		esac
