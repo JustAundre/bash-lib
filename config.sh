@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-#
-# Environment Setup
-#
-# Declare ANSII colors used in global scope.
 declare -A ansii
-ansii[rev]='\e[7m'
-ansii[cyan]='\e[36m'
-ansii[yellow]='\e[33m'
-ansii[red]='\e[31m'
-ansii[reset]='\e[0m'
-ansii[dim]='\e[2m'
+ansii=(
+	[rev]=$'\e[7m'
+	[lime]=$'\e[92m'
+	[cyan]=$'\e[36m'
+	[yellow]=$'\e[33m'
+	[red]=$'\e[3'
+	[reset]=$'\e[0m'
+	[dim]=$'\e[2m'
+)
 export ansii
