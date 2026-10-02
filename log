@@ -14,7 +14,7 @@ log() {
 	#
 	# If no input, error out.
 	if [[ "${#input[@]}" -lt 1 ]]; then
-		log e 'Missing message for "log" library command.'
+		log e 'log: Missing operand.'
 		return 2
 	fi
 	#
@@ -24,7 +24,7 @@ log() {
 	w) printf -- "${ansii[rev]}${ansii[yellow]}W: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
 	e) printf -- "${ansii[rev]}${ansii[red]}E: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
 	*)
-		log e "Invalid log type \"${type}\". Valid options are \"i\" (info), \"w\" (warning), or \"e\" (error)."
+		log e "log: invalid log type \"${type}\". Valid options are \"i\" (info), \"w\" (warning), or \"e\" (error)."
 		return 3
 		;;
 	esac
