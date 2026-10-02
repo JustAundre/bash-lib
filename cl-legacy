@@ -67,8 +67,7 @@ cl-legacy() {
 		else
 			echo
 		fi
-		existing_trap="$(trap -p SIGINT)"
-		trap 'trap "${existing_trap}" SIGINT; return 130' SIGINT
+		trap 'return 130' SIGINT
 		if ((!optional)); then
 			printf 'Type, then press [ENTER] to submit: '
 			while ((!${#selections[@]})); do
@@ -77,7 +76,6 @@ cl-legacy() {
 		else
 			read -erp 'Type, then press [ENTER] to submit: ' -a selections
 		fi
-		trap '${existing_trap}' SIGINT
 	} >&"${ui}"
 	#
 	# Do nothing with empty responses and validate user choices then return the choices.

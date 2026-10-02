@@ -2,9 +2,8 @@
 confirm() {
 	local answer=''
 	until [[ "${answer}" =~ ^[YyNn]$ ]]; do
-		[[ -n "${PS3}" ]] && printf -- '%s\n' "${PS3}"
-		printf "%s? [y/n]: \n" "${1}"
-		read -e answer
+		printf "${ansii[rev]}${ansii[lime]}Q: %s? [y/n]: ${ansii[reset]}\n" "${1}"
+		read -er answer
 		answer="${answer:0:1}"
 	done
 	[[ "${answer}" =~ ^[Yy]$ ]]
