@@ -2,7 +2,7 @@
 find() {
 	local arg args
 	for arg in "${@}"; do
-		if [[ "${arg}" == '-xephem' ]]; then
+		if [[ ${arg} == '-xephem' ]]; then
 			args+=(
 				'('
 				-path /tmp
@@ -21,7 +21,6 @@ find() {
 			args+=("${arg}")
 		fi
 	done
-	[[ "${args[-1]}" == '-o' ]] && args+=(-print)
 	command find "${args[@]}"
 }
 export -f find

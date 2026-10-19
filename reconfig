@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 reconfig() {
 	# Parse arguments
-	local OPTIND=1 delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0
+	local OPTIND=1 delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0 arg=''
 	while getopts 'd:x:p' arg; do
 		case "${arg}" in
 		d)
@@ -14,7 +14,7 @@ reconfig() {
 			create_nonexistent=1
 			;;
 		*)
-			log e "perm_fix: invalid short-form option: ${arg@Q}"
+			log e "perm-fix: invalid short-form option: ${arg@Q}"
 			return 1
 			;;
 		esac
@@ -32,25 +32,23 @@ reconfig() {
 	fi
 	#
 	# Handle duplicate entries accordingly
-	grep -qE "^[^#].*${1}${delimiter}.*$" "${3}" && duplicate=1
+	grep -m 1 -qE "^[^#]*${1}${delimiter}.*$" "${3}" && duplicate=1
 	((duplicate)) && case "${exception}" in
-	replace)
+	'replace')
 		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" "${3}"
-		return
 		;;
-	append)
+	'append')
 		echo "${1}${delimiter}${2}" >> "${3}"
-		return
 		;;
-	abort)
-		log e "perm_fix: operation aborted: ${1@Q} was already defined in ${3@Q}."
+	'abort')
+		log e "perm-fix: operation aborted: ${1@Q} is already defined in ${3@Q}."
 		return 2
 		;;
 	*)
-		log e "${exception} is not a valid value for -x. Valid values are:"$'\n\t"replace", "append", or "abort".'
+		log e "${exception@Q} is not a valid value for -x."
+		log i 'Valid values for -x are: "replace", "append", or "abort".'
 		return 1
 		;;
 	esac
-	echo "${1}${delimiter}${2}" >> "${3}"
 }
 export -f reconfig

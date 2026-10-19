@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cl-legacy() {
-	local ui='' item selections selection x=0 entries multi=0 optional=0
+	local ui='' item selections selection x=0 entries multi=0 optional=0 i=''
 	exec {ui}>&2
 	#
 	# Grab args

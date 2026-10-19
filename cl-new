@@ -1,8 +1,138 @@
 #!/usr/bin/env bash
+# UI Renderer
+_cl_new_render_ui() {
+	local -i display_count=10 visible_start=offset visible_end
+	local ornament margin indicator result
+	result+=$'\033[H\033[J'
+	#
+	# Keep current_index in view
+	if ((current_index < offset)); then
+		offset="${current_index}"
+	elif ((current_index >= offset + display_count)); then
+		offset="$((current_index - display_count + 1))"
+	fi
+	#
+	# Calculate visible range
+	if ((${#entries[@]} <= display_count)); then
+		visible_start=0
+		visible_end="$((${#entries[@]} - 1))"
+		offset=0
+	else
+		visible_end=$((offset + display_count - 1))
+		if ((visible_end >= ${#entries[@]})); then
+			visible_end="$((${#entries[@]} - 1))"
+			visible_start=$((visible_end - display_count + 1))
+			offset="${visible_start}"
+		else
+			visible_start="${offset}"
+		fi
+	fi
+	result+="${ansii[lime]}${ansii[rev]}${PS2}${ansii[reset]}"$'\n'
+	result+="${ansii[dim]}↑/↓ to scroll | [SPACE] to select | [ENTER] to confirm${ansii[reset]}"$'\n'
+	#
+	# Show scroll indicator (top)
+	if ((offset > 0)); then
+		result+="${ansii[dim]}$((${#entries[@]} - (${#entries[@]} - current_index) + 1))/${#entries[@]}		▲  ▲  ▲  ▲  ▲${ansii[reset]}"$'\n'
+	else
+		result+="${ansii[dim]}$((${#entries[@]} - (${#entries[@]} - current_index) + 1))/${#entries[@]}${ansii[reset]}"$'\n'
+	fi
+	#
+	# Display items
+	for ((i = visible_start; i <= visible_end && i < ${#entries[@]}; i++)); do
+		local is_selected=0
+		for sel in "${selections[@]}"; do
+			if [[ ${sel} == "${i}" ]]; then
+				is_selected=1
+				break
+			fi
+		done
+		#
+		# Check if this is the current item (cursor position)
+		ornament=''
+		((is_selected)) && ornament="${ansii[rev]}"
+		margin='    '
+		((i == current_index)) && margin='  > '
+		indicator=' '
+		((is_selected)) && indicator='*'
+		if ((multi)); then
+			indicator="[${indicator}]"
+		else
+			indicator="(${indicator})"
+		fi
+		result+="${ornament}${margin}${indicator} ${entries[${i}]}${ansii[reset]}"$'\n'
+	done
+	#
+	# Show scroll indicator (bottom)
+	if ((visible_end < ${#entries[@]} - 1)); then
+		result+="${ansii[dim]}		▼  ▼  ▼  ▼  ▼${ansii[reset]}"
+	fi
+	echo "${result}"
+}
+#
+# Handle keyboard input
+_cl_new_read_input() {
+	local key key2 IFS=''
+	trap 'return 130' SIGINT
+	read -sn1 key || return 130
+	if [[ ${key} == $'\E' ]]; then
+		read -rsn2 key2 || return 130
+		key+="${key2}"
+	fi
+	case "${key}" in
+	# Up arrow
+	$'\E[A')
+		if ((current_index > 0)); then
+			((current_index--))
+		else
+			return 2
+		fi
+		return 1
+		;;
+	#
+	# Down arrow
+	$'\E[B')
+		if ((current_index < ${#entries[@]} - 1)); then
+			((current_index++))
+		else
+			return 2
+		fi
+		return 1
+		;;
+	#
+	# Space - Toggle selection
+	' ')
+		local is_selected=0
+		for ((i = 0; i < ${#selections[@]}; i++)); do
+			if [[ "${selections[$i]}" == "${current_index}" ]]; then
+				is_selected=1
+				unset 'selections[$i]'
+				selections=("${selections[@]}")
+				break
+			fi
+		done
+		if ((! is_selected)); then
+			((multi)) || selections=()
+			selections+=("${current_index}")
+		fi
+		return 1
+		;;
+	#
+	# Enter
+	'')
+		((optional || ${#selections[@]})) && return 0
+		return 2
+		;;
+	#
+	# Unknown input
+	*)
+		return 2
+		;;
+	esac
+}
 
 cl-new() {
 	# Grab args
-	local ui selection offset=0 current_index=0 multi=0 optional=0 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}"
+	local ui selection offset=0 current_index=0 multi=0 optional=0 entries=() selections=() PS2="${PS2:-\"Pick a card any card!\"}" i='' sel='' exit_code=''
 	exec {ui}>&2
 	while ((${#} > 0)); do
 	  	case "${1}" in
@@ -50,148 +180,17 @@ cl-new() {
 		return 1
 	fi
 	((optional)) || PS2="* ${PS2}"
-	#
-	# UI Renderer
 	clear -x >&"${ui}"
-	render_ui() {
-		local -i display_count=10 visible_start=offset visible_end
-		local ornament margin indicator result
-		result+=$'\033[H\033[J'
-		#
-		# Keep current_index in view
-		if ((current_index < offset)); then
-			offset="${current_index}"
-		elif ((current_index >= offset + display_count)); then
-			offset="$((current_index - display_count + 1))"
-		fi
-		#
-		# Calculate visible range
-		if ((${#entries[@]} <= display_count)); then
-			visible_start=0
-			visible_end="$((${#entries[@]} - 1))"
-			offset=0
-		else
-			visible_end=$((offset + display_count - 1))
-			if ((visible_end >= ${#entries[@]})); then
-				visible_end="$((${#entries[@]} - 1))"
-				visible_start=$((visible_end - display_count + 1))
-				offset="${visible_start}"
-			else
-				visible_start="${offset}"
-			fi
-		fi
-		result+="${ansii[lime]}${ansii[rev]}${PS2}${ansii[reset]}"$'\n'
-		result+="${ansii[dim]}↑/↓ to scroll | [SPACE] to select | [ENTER] to confirm${ansii[reset]}"$'\n'
-		#
-		# Show scroll indicator (top)
-		if ((offset > 0)); then
-			result+="${ansii[dim]}$((${#entries[@]} - (${#entries[@]} - current_index) + 1))/${#entries[@]}		▲  ▲  ▲  ▲  ▲${ansii[reset]}"$'\n'
-		else
-			result+="${ansii[dim]}$((${#entries[@]} - (${#entries[@]} - current_index) + 1))/${#entries[@]}${ansii[reset]}"$'\n'
-		fi
-		#
-		# Display items
-		for ((i = visible_start; i <= visible_end && i < ${#entries[@]}; i++)); do
-			local is_selected=0
-			for sel in "${selections[@]}"; do
-				if [[ ${sel} == "${i}" ]]; then
-					is_selected=1
-					break
-				fi
-			done
-			#
-			# Check if this is the current item (cursor position)
-			ornament=''
-			((is_selected)) && ornament="${ansii[rev]}"
-			margin='    '
-			((i == current_index)) && margin='  > '
-			indicator=' '
-			((is_selected)) && indicator='*'
-			if ((multi)); then
-				indicator="[${indicator}]"
-			else
-				indicator="(${indicator})"
-			fi
-			result+="${ornament}${margin}${indicator} ${entries[${i}]}${ansii[reset]}"$'\n'
-		done
-		#
-		# Show scroll indicator (bottom)
-		if ((visible_end < ${#entries[@]} - 1)); then
-			result+="${ansii[dim]}		▼  ▼  ▼  ▼  ▼${ansii[reset]}"
-		fi
-		echo "${result}"
-	}
-	#
-	# Handle keyboard input
-	read_input() {
-		local key key2 IFS=''
-		trap 'return 130' SIGINT
-		read -sn1 key || return 130
-		if [[ ${key} == $'\E' ]]; then
-			read -rsn2 key2 || return 130
-			key+="${key2}"
-		fi
-		case "${key}" in
-		# Up arrow
-		$'\E[A')
-			if ((current_index > 0)); then
-				((current_index--))
-			else
-				return 2
-			fi
-			return 1
-			;;
-		#
-		# Down arrow
-		$'\E[B')
-			if ((current_index < ${#entries[@]} - 1)); then
-				((current_index++))
-			else
-				return 2
-			fi
-			return 1
-			;;
-		#
-		# Space - Toggle selection
-		' ')
-			local is_selected=0
-			for ((i = 0; i < ${#selections[@]}; i++)); do
-				if [[ "${selections[$i]}" == "${current_index}" ]]; then
-					is_selected=1
-					unset 'selections[$i]'
-					selections=("${selections[@]}")
-					break
-				fi
-			done
-			if ((! is_selected)); then
-				((multi)) || selections=()
-				selections+=("${current_index}")
-			fi
-			return 1
-			;;
-		#
-		# Enter
-		'')
-			((optional || ${#selections[@]})) && return 0
-			return 2
-			;;
-		#
-		# Unknown input
-		*)
-			return 2
-			;;
-		esac
-	}
 	#
 	# Main loop
 	{
-		render_ui
-		until read_input; do
+		_cl_new_render_ui
+		until _cl_new_read_input; do
 			exit_code="${?}"
 			if ((exit_code == 130)); then
 				return 130
 			elif ((exit_code != 2)); then
-				render_ui
+				_cl_new_render_ui
 			fi
 		done
 		printf '\033[H\033[J'
@@ -207,6 +206,5 @@ cl-new() {
 	else
 		printf '%s' "${entries["${selections[0]}"]}"
 	fi
-	unset read_input render_ui
 }
-export -f cl-new
+export -f _cl_new_render_ui _cl_new_read_input cl-new

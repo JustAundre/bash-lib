@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 log() {
-	# ANSII escapes for coloring output
-	local type
-	#
 	# Catch arguments (if no input in args, grab input from stdin.)
-	type="${1}"
+	local type="${1}" input=()
 	shift 1
-	if [[ -t 0 && -n "${1}" ]]; then
+	if [[ -n "${1}" ]]; then
 		input=("${@}")
 	elif [[ ! -t 0 ]]; then
 		input=("$(< /dev/stdin)")
@@ -24,7 +21,7 @@ log() {
 	w) printf -- "${ansii[rev]}${ansii[yellow]}W: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
 	e) printf -- "${ansii[rev]}${ansii[red]}E: %s${ansii[reset]}\n" "${input[@]}" >&2 ;;
 	*)
-		log e "log: invalid log type \"${type}\". Valid options are \"i\" (info), \"w\" (warning), or \"e\" (error)."
+		log e "log: invalid log type ${type@Q}. Valid options are \"i\" (info), \"w\" (warning), or \"e\" (error)."
 		return 3
 		;;
 	esac
