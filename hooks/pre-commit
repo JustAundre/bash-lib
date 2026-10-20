@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Versioned git pre-commit hook, installed via hooks/install.sh
+# (git config core.hooksPath hooks).
+#
+
+set -u
+cd "$(dirname "${0}")/.." || exit 1
+./hooks/lint.sh --staged --fix
+./hooks/standardize-perms.sh --staged --fix
