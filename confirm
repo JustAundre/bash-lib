@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 confirm() {
-	local REPLY=''
-	until [[ "${REPLY}" =~ ^[YyNn]$ ]]; do
-		printf "${ansii[rev]}${ansii[lime]}Q: %s? [y/n]: ${ansii[reset]}\n" "${1}"
-		read -er REPLY
-		REPLY="${REPLY:0:1}"
+	local response=''
+	until [[ ${response} =~ ^[YyNn]$ ]]; do
+		read -rep "${ansii[rev]}${ansii[lime]}Q: ${1}? [y/n]: ${ansii[reset]}" response
 	done
-	[[ "${REPLY}" =~ ^[Yy]$ ]]
+	[[ "${response}" =~ ^[Yy]$ ]]
 }
 export -f confirm

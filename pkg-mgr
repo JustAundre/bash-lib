@@ -92,7 +92,7 @@ pkg-mgr() {
 	'verify-file')
 		case "${pkg_backend}" in
 		'apt-get')
-			if ! hash debsums; then
+			if ! hash debsums &>/dev/null; then
 		 		log e "'debsums' needs to be installed."
 		   		return 4
 		 	fi
