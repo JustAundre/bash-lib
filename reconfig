@@ -14,7 +14,7 @@ reconfig() {
 			create_nonexistent=1
 			;;
 		*)
-			log e "perm-fix: invalid short-form option: ${arg@Q}"
+			log e "reconfig: invalid short-form option: ${arg@Q}"
 			return 1
 			;;
 		esac
@@ -35,13 +35,13 @@ reconfig() {
 	grep -m 1 -qE "^[^#]*${1}${delimiter}.*$" "${3}" && duplicate=1
 	((duplicate)) && case "${exception}" in
 	'replace')
-		sed -i "s/^[^#]*${1}.*$/${1}${delimiter}${2}/" "${3}"
+		sed -i "s${sed_delim}^[^#]*${1}.*\$${sed_delim}${1}${delimiter}${2}${sed_delim}" "${3}"
 		;;
 	'append')
 		echo "${1}${delimiter}${2}" >> "${3}"
 		;;
 	'abort')
-		log e "perm-fix: operation aborted: ${1@Q} is already defined in ${3@Q}."
+		log e "reconfig: operation aborted: ${1@Q} is already defined in ${3@Q}."
 		return 2
 		;;
 	*)
