@@ -14,7 +14,7 @@ reconfig() {
 			create_nonexistent=1
 			;;
 		*)
-			log e "reconfig: invalid short-form option: ${arg@Q}"
+			log e "unknown short-form option: ${arg@Q}"
 			return 1
 			;;
 		esac
@@ -25,9 +25,9 @@ reconfig() {
 	[[ -f "${3}" ]] || if ((create_nonexistent)); then
 		mkdir -p "$(dirname "${3}")" && true >> "${3}"
 	elif [[ -d "${3}" ]]; then
-		log e "reconfig: cannot write to a directory: ${3@Q}"
+		log e "cannot write to a directory: ${3@Q}"
 	else
-		log e "reconfig: ${3@Q} doesn't exist."
+		log e "${3@Q} doesn't exist."
 		return 3
 	fi
 	#
@@ -41,12 +41,12 @@ reconfig() {
 		echo "${1}${delimiter}${2}" >> "${3}"
 		;;
 	'abort')
-		log e "reconfig: operation aborted: ${1@Q} is already defined in ${3@Q}."
+		log e "operation aborted: ${1@Q} is already defined in ${3@Q}."
 		return 2
 		;;
 	*)
 		log e "${exception@Q} is not a valid value for -x."
-		log i 'Valid values for -x are: "replace", "append", or "abort".'
+		log i 'valid values for -x are: "replace", "append", or "abort".'
 		return 1
 		;;
 	esac

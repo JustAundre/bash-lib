@@ -4,7 +4,7 @@ insq() {
 	local file="${1}" anchor="${2}" pos="${3}" delta_indent="${4}" base_indent='' indent='' block='' entry='' i=0
 	shift 4
 	if ! [[ ${pos} == append || ${pos} == prepend ]]; then
-		log e 'insq: position argument 3 must be "append" or "prepend".'
+		log e 'position argument 3 must be "append" or "prepend".'
 		return 1
 	fi
 	#

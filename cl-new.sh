@@ -149,7 +149,7 @@ cl-new() {
 			break
 			;;
 		--*)
-			log e "cl-new: invalid long-form option: ${1@Q}"
+			log e "unknown long-form option: ${1@Q}"
 			return 2
 			;;
 		-*)
@@ -162,7 +162,7 @@ cl-new() {
 					optional=1
 					;;
 				*)
-					log e "cl-new: invalid short-form option: -${1:i:1}"
+					log e "unknown short-form option: -${1:i:1}"
 					return 2
 					;;
 				esac
@@ -176,7 +176,7 @@ cl-new() {
 	done
 	entries=("${@}")
 	if ((${#entries[@]} == 0)); then
-		log e 'cl-new: no items to display for user to select from.'
+		log e 'no items to display for user to select from.'
 		return 1
 	fi
 	((optional)) || PS2="* ${PS2}"

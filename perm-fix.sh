@@ -7,25 +7,25 @@ perm-fix() {
 		m)
 			mode="${OPTARG}"
 			[[ "${mode}" =~ ^[01234567]{3,4}$ ]] ||
-				errors+=("perm-fix: ${mode@Q} is an invalid octal mode.")
+				errors+=("${FUNCNAME[0]}: ${mode@Q} is an invalid octal mode.")
 			;;
 		o)
 			owner="${OPTARG}"
 			[[ "${owner}" =~ ^[0-9]+$ ]] ||
 				getent passwd -- "${owner}" &> /dev/null ||
-				errors+=("perm-fix: ${owner@Q} is an invalid user.")
+				errors+=("${FUNCNAME[0]}: ${owner@Q} is an invalid user.")
 			;;
 		g)
 			group="${OPTARG}"
 			[[ "${group}" =~ ^[0-9]+$ ]] ||
 				getent group -- "${group}" &> /dev/null ||
-				errors+=("perm-fix: ${group@Q} is an invalid group.")
+				errors+=("${FUNCNAME[0]}: ${group@Q} is an invalid group.")
 			;;
 		f)
 			force=1
 			;;
 		*)
-			log e "perm-fix: invalid short-form option: ${arg@Q}."
+			log e "unknown short-form option: ${arg@Q}."
 			return 1
 		;;
 		esac
@@ -47,23 +47,23 @@ perm-fix() {
 	for i in "${!paths[@]}"; do
 		# Validate path
 		if [[ ! -e ${paths[${i}]} ]]; then
-			log e "perm-fix: cannot access ${paths["${i}"]@Q}: No such file or directory."
+			log e "cannot access ${paths["${i}"]@Q}: No such file or directory."
 			unset "paths[${i}]"
 			continue
 		fi
 		if [[ -L ${paths[${i}]} ]]; then
 			if ((!force)); then
-				log e "perm-fix: Refused to process symlink ${paths["${i}"]@Q} without option -f."
+				log e "refused to process symlink ${paths["${i}"]@Q} without option -f."
 				unset "paths[${i}]"
 			else
-				log w "perm-fix: ${paths["${i}"]@Q} is a symlink to $(realpath -- "${paths["${i}"]}" | cat)."
+				log w "${paths["${i}"]@Q} is a symlink to $(realpath -- "${paths["${i}"]}" | cat)."
 			fi
 		fi
 	done
 	#
 	# Validate args
 	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
-		errors+=('perm-fix: Insufficient operand(s)')
+		errors+=("${FUNCNAME[0]}: Insufficient operand(s)")
 	fi
 	if ((${#errors[@]})); then
 		log e "${errors[@]}"

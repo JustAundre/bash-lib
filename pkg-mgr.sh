@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 pkg-mgr() {
 	if [[ ! "${pkg_backend}" =~ ('apt-get'|'dnf'|'yum'|'pacman'|'pkg') ]]; then
-		log e "Unsupported package manager: ${pkg_backend@Q}"
+		log e "unsupported package manager: ${pkg_backend@Q}"
 		return 1
 	fi
 	local action="${1}" pkgs=()
