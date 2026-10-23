@@ -35,7 +35,7 @@ perm-fix() {
 	# Collect paths from the arguments, then append any NUL-delimited paths piped in via stdin.
 	# Empty entries (i.e. from a trailing or doubled delimiter) are ignored.
 	paths=("${@}")
-	if [[ ! -t 0 ]]; then
+	if ((!${#paths[@]})) && [[ ! -t 0 ]]; then
 		mapfile -td '' stdin_paths
 		for stdin_path in "${stdin_paths[@]}"; do
 			[[ -n ${stdin_path} ]] && paths+=("${stdin_path}")
