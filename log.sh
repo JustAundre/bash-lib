@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 log() {
-	# Catch arguments (if no input in args, grab input from stdin.)
-	if [[ ! ${FUNCNAME[1]} =~ ^('main'|'source'|'')$ ]]; then
+	if [[ -n ${FUNCNAME[1]} && ${FUNCNAME[1]} != 'main' && ${FUNCNAME[1]} != 'source' ]]; then
 		local _BASH_LIB_LOG_BASE_NAME="${FUNCNAME[1]}"
+	elif [[ -z ${_BASH_LIB_LOG_BASE_NAME} && -n ${BASH_SOURCE[1]} ]]; then
+		local _BASH_LIB_LOG_BASE_NAME="${BASH_SOURCE[1]##*/}"
 	elif [[ -z ${_BASH_LIB_LOG_BASE_NAME} ]]; then
-		_BASH_LIB_LOG_BASE_NAME="${0##*/}"
+		_BASH_LIB_LOG_BASE_NAME="$(basename -- "${0}")"
 	fi
+	[[ ${FUNCNAME[0]}${FUNCNAME[1]}${FUNCNAME[2]} == "${FUNCNAME[0]}${FUNCNAME[0]}${FUNCNAME[0]}" ]] &&
+		echo "${ansii[rev]}${ansii[red]}E: ${_BASH_LIB_LOG_BASE_NAME}: recursive error detected.${ansii[reset]}"
+	#
+	# Catch arguments (if no input in args, grab input from stdin.)
 	local type="${1}" input=()
 	shift 1
 	if [[ -n ${1} ]]; then
