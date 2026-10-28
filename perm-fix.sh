@@ -6,20 +6,20 @@ perm-fix() {
 		case "${arg}" in
 		m)
 			mode="${OPTARG}"
-			[[ "${mode}" =~ ^[01234567]{3,4}$ ]] ||
-				errors+=("${FUNCNAME[0]}: ${mode@Q} is an invalid octal mode.")
+			[[ ${mode} =~ ^[01234567]{3,4}$ ]] ||
+				errors+=("${mode@Q} is an invalid octal mode.")
 			;;
 		o)
 			owner="${OPTARG}"
-			[[ "${owner}" =~ ^[0-9]+$ ]] ||
+			[[ ${owner} =~ ^[0-9]+$ ]] ||
 				getent passwd -- "${owner}" &> /dev/null ||
-				errors+=("${FUNCNAME[0]}: ${owner@Q} is an invalid user.")
+				errors+=("${owner@Q} is an invalid user.")
 			;;
 		g)
 			group="${OPTARG}"
-			[[ "${group}" =~ ^[0-9]+$ ]] ||
+			[[ ${group} =~ ^[0-9]+$ ]] ||
 				getent group -- "${group}" &> /dev/null ||
-				errors+=("${FUNCNAME[0]}: ${group@Q} is an invalid group.")
+				errors+=("${group@Q} is an invalid group.")
 			;;
 		f)
 			force=1
@@ -56,14 +56,14 @@ perm-fix() {
 				log e "refused to process symlink ${paths["${i}"]@Q} without option -f."
 				unset "paths[${i}]"
 			else
-				log w "${paths["${i}"]@Q} is a symlink to $(realpath -- "${paths["${i}"]}" | cat)."
+				log w "${paths["${i}"]@Q} is a symlink to $(realpath -- "${paths["${i}"]}")."
 			fi
 		fi
 	done
 	#
 	# Validate args
 	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
-		errors+=("${FUNCNAME[0]}: Insufficient operand(s)")
+		errors+=("insufficient operand(s)")
 	fi
 	if ((${#errors[@]})); then
 		log e "${errors[@]}"
