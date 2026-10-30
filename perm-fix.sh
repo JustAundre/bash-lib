@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 perm-fix() {
 	# Parse arguments
-	local OPTIND=1 errors=() mode='' owner='' group='' force=0 i arg='' paths=() stdin_path='' stdin_paths=()
-	while getopts 'm:o:g:f' arg; do
+	local OPTIND=1 errors=() mode='' owner='' group='' force=0 no_args_success=0 i=0 arg='' paths=() stdin_path='' stdin_paths=()
+	while getopts 'm:o:g:fs' arg 2>(log e); do
 		case "${arg}" in
 		m)
 			mode="${OPTARG}"
@@ -12,22 +12,21 @@ perm-fix() {
 		o)
 			owner="${OPTARG}"
 			[[ ${owner} =~ ^[0-9]+$ ]] ||
-				getent passwd -- "${owner}" &> /dev/null ||
+				getent passwd -- "${owner}" &>/dev/null ||
 				errors+=("${owner@Q} is an invalid user.")
 			;;
 		g)
 			group="${OPTARG}"
 			[[ ${group} =~ ^[0-9]+$ ]] ||
-				getent group -- "${group}" &> /dev/null ||
+				getent group -- "${group}" &>/dev/null ||
 				errors+=("${group@Q} is an invalid group.")
 			;;
 		f)
 			force=1
 			;;
-		*)
-			log e "unknown short-form option: ${arg@Q}."
-			return 1
-		;;
+		s)
+			no_args_success=1
+			;;
 		esac
 	done
 	shift "$((OPTIND - 1))"
@@ -36,7 +35,7 @@ perm-fix() {
 	# Empty entries (i.e. from a trailing or doubled delimiter) are ignored.
 	paths=("${@}")
 	if ((!${#paths[@]})) && [[ ! -t 0 ]]; then
-		mapfile -td '' stdin_paths
+		mapfile -t -d '' stdin_paths
 		for stdin_path in "${stdin_paths[@]}"; do
 			[[ -n ${stdin_path} ]] && paths+=("${stdin_path}")
 		done
@@ -65,11 +64,15 @@ perm-fix() {
 	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
 		errors+=("insufficient operand(s)")
 	fi
-	if ((${#errors[@]})); then
-		log e "${errors[@]}"
-		return 1
+		if ((${#errors[@]})); then
+			log e "${errors[@]}"
+			return 1
+		fi
+	if ((no_args_success)); then
+		((${#paths[@]})) || return 5
+	else
+		return 0
 	fi
-	((${#paths[@]})) || return 5
 	#
 	# Apply changes
 	if [[ -n ${owner} && -n ${group} ]]; then
