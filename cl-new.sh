@@ -73,9 +73,9 @@ _cl_new_render_ui() {
 _cl_new_read_input() {
 	local key key2 IFS=''
 	trap 'return 130' SIGINT
-	read -sn1 key || return 130
+	read -r -s -n 1 key || return 130
 	if [[ ${key} == $'\E' ]]; then
-		read -rsn2 key2 || return 130
+		read -r -s -n 2 key2 || return 130
 		key+="${key2}"
 	fi
 	case "${key}" in
@@ -110,7 +110,7 @@ _cl_new_read_input() {
 				break
 			fi
 		done
-		if ((! is_selected)); then
+		if ((!is_selected)); then
 			((multi)) || selections=()
 			selections+=("${current_index}")
 		fi
