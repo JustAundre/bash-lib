@@ -2,9 +2,9 @@
 pause() {
 	local seconds="${1:-10}" REPLY=''
 	if [[ "${seconds}" == 0 ]]; then
-		read -n1 -rp "(Paused indefinitely)"$'\n⏸ ⏸ ⏸ > > PRESS ANY KEY TO RESUME < < ⏸ ⏸ ⏸\n'
+		read -r -n 1 -p "(Paused indefinitely)"$'\n⏸ ⏸ ⏸ > > PRESS ANY KEY TO RESUME < < ⏸ ⏸ ⏸\n'
 	else
-		read -t "${seconds}" -n1 -rp "(Auto-resuming in ${seconds} seconds...)"$'\n⏸ ⏸ ⏸ > > PRESS ANY KEY TO RESUME < < ⏸ ⏸ ⏸\n'
+		read -r -t "${seconds}" -n 1 -p "(Auto-resuming in ${seconds} seconds...)"$'\n⏸ ⏸ ⏸ > > PRESS ANY KEY TO RESUME < < ⏸ ⏸ ⏸\n'
 	fi
 	log i 'Resumed script.'
 }
