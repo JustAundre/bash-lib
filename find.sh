@@ -13,6 +13,7 @@ find() {
 				-o -path /var/run
 				-o -path /var/lock
 				-o -path /var/tmp
+				-o -path /var/cache
 				')'
 				-prune
 				-o
