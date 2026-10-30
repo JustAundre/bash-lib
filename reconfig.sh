@@ -2,7 +2,7 @@
 reconfig() {
 	# Parse arguments
 	local OPTIND=1 delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0 arg=''
-	while getopts 'd:x:p' arg; do
+	while getopts 'd:x:p' arg 2>(log e); do
 		case "${arg}" in
 		d)
 			delimiter="${OPTARG}"
@@ -12,10 +12,6 @@ reconfig() {
 			;;
 		p)
 			create_nonexistent=1
-			;;
-		*)
-			log e "unknown short-form option: ${arg@Q}"
-			return 1
 			;;
 		esac
 	done
@@ -32,7 +28,7 @@ reconfig() {
 	fi
 	#
 	# Handle duplicate entries accordingly
-	grep -m 1 -qE "^[^#]*${1}${delimiter}.*$" "${3}" && duplicate=1
+	grep -m 1 -q -E "^[^#]*${1}${delimiter}.*$" "${3}" && duplicate=1
 	((duplicate)) && case "${exception}" in
 	'replace')
 		sed -i "s${sed_delim}^[^#]*${1}.*\$${sed_delim}${1}${delimiter}${2}${sed_delim}" "${3}"
