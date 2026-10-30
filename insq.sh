@@ -4,7 +4,7 @@ insq() {
 	local file="${1}" anchor="${2}" pos="${3}" delta_indent="${4}" base_indent='' indent='' block='' entry='' i=0
 	shift 4
 	if ! [[ ${pos} == append || ${pos} == prepend ]]; then
-		log e 'position argument 3 must be "append" or "prepend".'
+		log e 'positional argument 3 must be "append" or "prepend".'
 		return 1
 	fi
 	#
@@ -29,6 +29,6 @@ insq() {
 	else
 		block="${block}"'\n\1\2'
 	fi
-	sed -Ei "s${sed_delim}^([[:space:]]*)(${anchor})${sed_delim}${block}${sed_delim}" "${file}"
+	sed -E -i "s${sed_delim}^([[:space:]]*)(${anchor})${sed_delim}${block}${sed_delim}" "${file}"
 }
 export -f insq
