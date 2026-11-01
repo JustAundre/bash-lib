@@ -19,11 +19,8 @@ log() {
 		mapfile -t input </dev/stdin
 	fi
 	#
-	# If no input, error out.
-	if ((${#input[@]} < 1)); then
-		log e 'missing operand.'
-		return 2
-	fi
+	# If no input, silently return with success.
+	((${#input[@]})) || return 0
 	#
 	# Parse input
 	case "${type}" in
