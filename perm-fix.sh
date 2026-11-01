@@ -61,16 +61,17 @@ perm-fix() {
 	done
 	#
 	# Validate args
-	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
+	if [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
 		errors+=("insufficient operand(s)")
+	fi
+	if ((!${#paths[@]} && !no_args_success)); then
+		errors+=("missing path operand(s)")
 	fi
 	if ((${#errors[@]})); then
 		log e "${errors[@]}"
 		return 1
 	fi
 	if ((!${#paths[@]})); then
-		((no_args_success)) || return 5
-	else
 		return 0
 	fi
 	#
