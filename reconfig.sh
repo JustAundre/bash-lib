@@ -2,7 +2,7 @@
 reconfig() {
 	# Parse arguments
 	local OPTIND=1 delimiter=' ' exception='abort' create_nonexistent=0 duplicate=0 arg=''
-	while getopts 'd:x:p' arg 2>(log e); do
+	while getopts 'd:x:p' arg; do
 		case "${arg}" in
 		d)
 			delimiter="${OPTARG}"
