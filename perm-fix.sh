@@ -2,7 +2,7 @@
 perm-fix() {
 	# Parse arguments
 	local OPTIND=1 errors=() mode='' owner='' group='' force=0 no_args_success=0 i=0 arg='' paths=() stdin_path='' stdin_paths=()
-	while getopts 'm:o:g:fs' arg 2>(log e); do
+	while getopts 'm:o:g:fs' arg; do
 		case "${arg}" in
 		m)
 			mode="${OPTARG}"
@@ -64,12 +64,12 @@ perm-fix() {
 	if ((!${#paths[@]})) || [[ -z ${mode} && -z ${owner} && -z ${group} ]]; then
 		errors+=("insufficient operand(s)")
 	fi
-		if ((${#errors[@]})); then
-			log e "${errors[@]}"
-			return 1
-		fi
-	if ((no_args_success)); then
-		((${#paths[@]})) || return 5
+	if ((${#errors[@]})); then
+		log e "${errors[@]}"
+		return 1
+	fi
+	if ((!${#paths[@]})); then
+		((no_args_success)) || return 5
 	else
 		return 0
 	fi
