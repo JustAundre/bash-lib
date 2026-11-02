@@ -19,7 +19,7 @@ reconfig() {
 	#
 	# Create non-existent path if specified.
 	[[ -f "${3}" ]] || if ((create_nonexistent)); then
-		mkdir -p "$(dirname "${3}")" && true >> "${3}"
+		mkdir -p "$(dirname "${3}")" && true >>"${3}"
 	elif [[ -d "${3}" ]]; then
 		log e "cannot write to a directory: ${3@Q}"
 	else
@@ -34,7 +34,7 @@ reconfig() {
 		sed -i "s${sed_delim}^[^#]*${1}.*\$${sed_delim}${1}${delimiter}${2}${sed_delim}" "${3}"
 		;;
 	'append')
-		echo "${1}${delimiter}${2}" >> "${3}"
+		echo "${1}${delimiter}${2}" >>"${3}"
 		;;
 	'abort')
 		log e "operation aborted: ${1@Q} is already defined in ${3@Q}."
