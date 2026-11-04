@@ -3,8 +3,8 @@ reconfig() {
 	local OPTIND=1 opt delimiter=' ' exception='abort' create_nonexistent=0 key value file lines=() found=0 i stripped
 	while getopts 'd:x:p' opt; do
 		case ${opt} in
-			d) delimiter=${OPTARG} ;;
-			x) exception=${OPTARG} ;;
+			d) delimiter="${OPTARG}" ;;
+			x) exception="${OPTARG}" ;;
 			p) create_nonexistent=1 ;;
 			*) return 1 ;;
 		esac
