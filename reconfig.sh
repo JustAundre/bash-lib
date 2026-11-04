@@ -50,8 +50,10 @@ reconfig() {
 				;;
 		esac
 	done
-	if ((found)) && [[ ${exception} == replace ]]; then
-		{ for i in "${!lines[@]}"; do echo "${lines[i]}"; done; } >"${file}" || return 3
+	if ((found)) && [[ ${exception} == 'replace' ]]; then
+		for i in "${!lines[@]}"; do
+			echo "${lines[i]}"
+		done >"${file}" || return 3
 	else
 		echo "${key}${delimiter}${value}" >>"${file}" || return 3
 	fi
