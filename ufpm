@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+ufpm() {
+	local command="${1}"
+	case "${command}" in
+	'query-owner')
+		local -n __pkg_owner_out_var="${1:-pkg}"
+		shift
+		local wip_result path='' paths=("${@}")
+		for path in "${paths[@]}"; do
+			case "${pkg_backend}" in
+			'apt-get')
+				wip_result="$(dpkg -S -- "${path}")"
+				[[ -z ${wip_result} && ${path:0:5} == '/usr/' ]] &&
+					wip_result="$(dpkg -S -- "${path#'/usr'}")"
+				__pkg_owner_out_var+=("${wip_result%%[:,]*}")
+				;;
+			'dnf'|'yum')
+				__pkg_owner_out_var+=("$(rpm -qf --qf '%{NAME}\n' -- "${path}")")
+				;;
+			'pacman')
+				__pkg_owner_out_var+=("$(pacman -Qoq -- "${path}")")
+				;;
+			'pkg')
+				__pkg_owner_out_var+=("$(pkg which -q -- "${path}")")
+				;;
+			esac
+		done
+		;;
+	*)
+		log e "unknown command: ${command@Q}"
+		return 1
+		;;
+	esac
+}
+export -f ufpm
